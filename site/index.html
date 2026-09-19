@@ -239,6 +239,56 @@ textarea {
   color: var(--ink-2);
 }
 
+/* ---------- ATS readiness ---------- */
+/* Structure and parseability, which is the part of an ATS that is
+   actually knowable from the outside. It is not a simulation of any
+   particular employer's system, and the panel says so - a score that
+   implied otherwise would be worse than no score. */
+.ats {
+  border-top: 1px solid var(--rule-soft); padding: var(--s4) var(--s5) var(--s5);
+  display: none; background: var(--surface);
+}
+.ats.on { display: block; }
+.ats-head { display: flex; align-items: flex-start; gap: var(--s5); flex-wrap: wrap; }
+.ats-score { line-height: 1; flex: none; }
+.ats-score b { font-size: 38px; font-weight: 700; letter-spacing: -.035em; }
+.ats-score span { font-size: 14px; color: var(--muted); }
+.ats-good b { color: var(--good); }
+.ats-mid b { color: var(--warn); }
+.ats-bad b { color: var(--crit); }
+.ats-meta { flex: 1 1 280px; min-width: 0; }
+.ats-meta h3 { font-size: 14.5px; font-weight: 700; margin: 0 0 var(--s1); }
+.ats-meta p { margin: 0; font-size: 12.5px; color: var(--muted); line-height: 1.55; }
+.ats-bar {
+  height: 7px; border-radius: 4px; background: var(--surface-2);
+  overflow: hidden; margin-top: var(--s3);
+}
+.ats-bar i { display: block; height: 100%; border-radius: 4px; }
+.ats-good .ats-bar i, .ats-bar i.good { background: var(--good); }
+.ats-list {
+  margin: var(--s5) 0 0; padding: 0; list-style: none;
+  display: grid; gap: var(--s3);
+  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+}
+.ats-item {
+  display: grid; grid-template-columns: 17px minmax(0,1fr);
+  gap: var(--s3); align-items: start;
+}
+.ats-ico {
+  width: 17px; height: 17px; border-radius: 50%; margin-top: 1px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; color: #fff; flex: none;
+}
+.ats-pass .ats-ico { background: var(--good); }
+.ats-warn .ats-ico { background: var(--warn); }
+.ats-fail .ats-ico { background: var(--crit); }
+.ats-item b { font-weight: 700; display: block; font-size: 13px; }
+.ats-item span { color: var(--muted); font-size: 12.5px; line-height: 1.5; display: block; }
+.ats-note {
+  margin: var(--s5) 0 0; font-size: 12px; color: var(--muted);
+  line-height: 1.6; padding-top: var(--s3); border-top: 1px solid var(--rule-soft);
+}
+
 /* ---------- controls ---------- */
 /* Sticky, because the list is thousands of rows long. Scrolling back to
    the top to change a filter, then losing your place, is the single most
@@ -517,8 +567,8 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
   <section class="resume">
     <div class="resume-head">
       <div>
-        <h2>Score these jobs against your resume</h2>
-        <p>Reads your CV in this browser and matches it to each job description — skills you already have, and the ones the posting asks for that your resume never mentions.</p>
+        <h2>Score your resume — and check it against an ATS</h2>
+        <p>Reads your CV in this browser and does two things: rates how well software can parse it, and matches it to every job below — the skills you already have, and the ones each posting asks for that your resume never mentions.</p>
       </div>
       <div class="resume-actions">
         <button class="btn btn-primary" id="open-dz">Add my resume</button>
@@ -543,6 +593,8 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
       <span class="who">Matching against <b id="res-name">your resume</b> — <span id="res-terms">0</span> skill terms detected</span>
       <div class="chipset" id="res-chips"></div>
     </div>
+
+    <div class="ats" id="ats"></div>
   </section>
 
   <div class="fambar">
@@ -743,6 +795,7 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
     document.getElementById("loaded").classList.remove("on");
     document.getElementById("clear-resume").hidden = true;
     document.getElementById("paste").value = "";
+    paintATS();
     render();
   }
 
@@ -760,6 +813,196 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
       el.textContent = titleCase(s);
       chips.appendChild(el);
     });
+    paintATS();
+  }
+
+  // ---------- ATS readiness ----------
+  // A resume is read by software before a person sees it. That software
+  // does not judge your career - it tries to PARSE you: find the contact
+  // block, segment the sections, read the dates, pull the skills. What is
+  // checked here is whether that parse can succeed, which is knowable
+  // from the text alone.
+  //
+  // What this deliberately does not claim: that it reproduces any named
+  // vendor's scoring. Nobody outside those companies can, and a number
+  // dressed up as "your Workday score" would be a lie. The panel says
+  // plainly what it measured.
+  var ATS_SECTIONS = [
+    ["experience", /\b(work\s+experience|professional\s+experience|employment(\s+history)?|work\s+history|career\s+(history|summary)|experience)\b/i],
+    ["education", /\b(education|academic|qualifications?|educational\s+background)\b/i],
+    ["skills", /\b(skills|core\s+competenc|technical\s+skills|areas?\s+of\s+expertise|proficienc)/i]
+  ];
+
+  var ATS_EMAIL = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/;
+  var ATS_PHONE = /(?:\+?\d{1,3}[\s-]?)?(?:\(\d{2,4}\)[\s-]?)?\d{5}[\s-]?\d{5}|\+?\d{10,13}/;
+  // A year on its own, or a month-year pair - the two shapes a parser
+  // looks for when it tries to build an employment timeline.
+  var ATS_DATE = /\b(19|20)\d{2}\b|\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*[\s.'-]*\d{2,4}\b/gi;
+  // Numbers that carry a unit or a magnitude: an achievement a recruiter
+  // can weigh, as opposed to a bare figure in an address or a date.
+  var ATS_QUANT = /\d+\s*%|\b(?:inr|rs\.?|usd|\$|₹)\s*\d|\b\d+(?:\.\d+)?\s*(?:cr|crore|lakh|lacs?|lpa|k|mn|million|bn)\b|\breduced\b|\bimproved\b|\bincreased\b|\bsaved\b/gi;
+
+  function atsReport(r) {
+    var text = r.text || "";
+    var words = (text.match(/[A-Za-z][A-Za-z'’-]*/g) || []).length;
+    var checks = [];
+    var score = 0;
+
+    function add(state, points, label, detail) {
+      checks.push({ state: state, label: label, detail: detail });
+      score += points;
+    }
+
+    // 1. Contact block (18). The first thing a parser looks for, and a
+    //    resume it cannot get an email out of is one nobody can reply to.
+    var hasEmail = ATS_EMAIL.test(text);
+    var hasPhone = ATS_PHONE.test(text);
+    if (hasEmail && hasPhone) {
+      add("pass", 18, "Contact details found", "Email and phone number are both readable.");
+    } else if (hasEmail || hasPhone) {
+      add("warn", 9, "Only one way to reach you",
+        "Found " + (hasEmail ? "an email but no phone number" : "a phone number but no email") +
+        ". Put both in the top few lines, as plain text.");
+    } else {
+      add("fail", 0, "No contact details found",
+        "No email or phone could be read. If yours sits in a header, footer or image, most parsers never see it — move it into the body.");
+    }
+
+    // 2. Sections (18). An ATS segments the document by heading; without
+    //    headings everything lands in one undifferentiated blob.
+    var found = [], missingSections = [];
+    ATS_SECTIONS.forEach(function (s) {
+      (s[1].test(text) ? found : missingSections).push(s[0]);
+    });
+    if (found.length === 3) {
+      add("pass", 18, "Standard sections present", "Experience, education and skills headings were all found.");
+    } else if (found.length === 2) {
+      add("warn", 12, "One section heading missing",
+        "No clear " + missingSections.join(" or ") + " heading. Use the ordinary word as its own line.");
+    } else {
+      add("fail", found.length * 6, "Section headings unclear",
+        "Missing: " + missingSections.join(", ") + ". Plain headings beat creative ones — a parser looks for the literal words.");
+    }
+
+    // 3. Dates (14). No dates means no timeline, and a timeline is what
+    //    experience filters run against.
+    var dates = text.match(ATS_DATE) || [];
+    if (dates.length >= 4) {
+      add("pass", 14, "Employment dates readable", dates.length + " date references found.");
+    } else if (dates.length >= 1) {
+      add("warn", 7, "Few dates found",
+        "Only " + dates.length + " date reference" + (dates.length === 1 ? "" : "s") +
+        ". Give every role a start and end, like “Mar 2021 – Jul 2024”.");
+    } else {
+      add("fail", 0, "No dates found",
+        "Nothing a parser can read as an employment date. Experience filters will skip you entirely.");
+    }
+
+    // 4. Quantified results (14).
+    var quant = text.match(ATS_QUANT) || [];
+    if (quant.length >= 5) {
+      add("pass", 14, "Achievements are quantified", quant.length + " figures or outcome words found.");
+    } else if (quant.length >= 2) {
+      add("warn", 9, "Could use more numbers",
+        "Only " + quant.length + " quantified points. DSO reduced, collections recovered, ledgers handled — put the figure in.");
+    } else {
+      add("fail", 3, "No measurable results",
+        "Nothing quantified. In finance especially, the numbers are the evidence.");
+    }
+
+    // 5. Length (12).
+    if (words >= 350 && words <= 1200) {
+      add("pass", 12, "Good length", words + " words — enough detail without padding.");
+    } else if (words < 350) {
+      add("warn", 5, "Quite short",
+        words + " words. Thin resumes give a matcher little to work with; 400–800 is a comfortable range.");
+    } else {
+      add("warn", 6, "On the long side",
+        words + " words. Anything past two pages tends to dilute the relevant parts.");
+    }
+
+    // 6. Domain vocabulary (16). Reuses the same skill list the job
+    //    matching runs on, so the number is consistent with the board.
+    var n = r.skills.length;
+    if (n >= 12) {
+      add("pass", 16, "Strong finance vocabulary", n + " recognised finance and systems terms.");
+    } else if (n >= 6) {
+      add("warn", 11, "Moderate keyword coverage",
+        n + " recognised terms. Name your ERP, your tools and your sub-domain explicitly.");
+    } else if (n >= 1) {
+      add("warn", 6, "Thin on keywords",
+        "Only " + n + " recognised term" + (n === 1 ? "" : "s") + ". Use the words the postings use — see the gaps on each job below.");
+    } else {
+      add("fail", 0, "No finance keywords recognised",
+        "Nothing matched the finance vocabulary. Either the text did not extract, or the wording is very generic.");
+    }
+
+    // 7. Parseability (8). The failure mode nobody notices: a beautiful
+    //    CV that is, to software, a picture.
+    var odd = (text.match(/[|\t▪●■◆]/g) || []).length;
+    if (words < 120) {
+      add("fail", 0, "Barely any text came out",
+        "Only " + words + " words extracted. That usually means a scanned or image-based PDF, which most parsers read as empty. Export a text PDF from Word.");
+    } else if (odd > 40) {
+      add("warn", 4, "Heavy table or column formatting",
+        odd + " layout characters found. Multi-column layouts often come out scrambled — a single column is safest.");
+    } else {
+      add("pass", 8, "Text extracts cleanly", "Plain, single-column text that a parser can read straight through.");
+    }
+
+    score = Math.max(0, Math.min(100, Math.round(score)));
+    return { score: score, checks: checks, words: words };
+  }
+
+  function paintATS() {
+    var box = document.getElementById("ats");
+    box.textContent = "";
+    if (!resume) { box.classList.remove("on"); return; }
+
+    var rep = atsReport(resume);
+    var band = rep.score >= 80 ? "good" : rep.score >= 55 ? "mid" : "bad";
+    var verdict = {
+      good: "Your resume should come through an ATS intact.",
+      mid: "Readable, but parts of it will be lost or misread.",
+      bad: "An ATS is likely to mangle or skip this."
+    }[band];
+
+    box.className = "ats on ats-" + band;
+
+    var head = el("div", "ats-head");
+    var sc = el("div", "ats-score");
+    sc.appendChild(el("b", null, String(rep.score)));
+    sc.appendChild(el("span", null, " / 100"));
+    head.appendChild(sc);
+
+    var meta = el("div", "ats-meta");
+    meta.appendChild(el("h3", null, "ATS readiness — " + verdict));
+    meta.appendChild(el("p", null,
+      "How machine-readable your CV is: whether the contact block, sections, dates, figures and keywords can be found and parsed."));
+    var bar = el("div", "ats-bar");
+    var fill = el("i");
+    fill.style.width = Math.max(3, rep.score) + "%";
+    fill.style.background = band === "good" ? "var(--good)"
+      : band === "mid" ? "var(--warn)" : "var(--crit)";
+    bar.appendChild(fill);
+    meta.appendChild(bar);
+    head.appendChild(meta);
+    box.appendChild(head);
+
+    var list = el("ul", "ats-list");
+    rep.checks.forEach(function (c) {
+      var li = el("li", "ats-item ats-" + c.state);
+      li.appendChild(el("span", "ats-ico", c.state === "pass" ? "✓" : c.state === "warn" ? "!" : "×"));
+      var body = el("div");
+      body.appendChild(el("b", null, c.label));
+      body.appendChild(el("span", null, c.detail));
+      li.appendChild(body);
+      list.appendChild(li);
+    });
+    box.appendChild(list);
+
+    box.appendChild(el("p", "ats-note",
+      "Checked in your browser, against nothing but your own file. This measures structure and parseability — it is not a simulation of any particular employer's system, and no score here can promise or deny a callback."));
   }
 
   // ---------- matching ----------
@@ -917,16 +1160,39 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
     return jhi >= want_lo && jlo <= want_hi;
   }
 
+  // One predicate for both the list and the facet counts. `skip` leaves
+  // one filter out, which is what a facet needs: the Accounting chip has
+  // to say how many Accounting roles you would get IF you clicked it,
+  // counted under every other filter you have already set. Applying a
+  // facet's own filter to its own count makes every unselected chip read
+  // zero the moment you pick one, which tells you nothing.
+  function passes(j, skip) {
+    if (skip !== "family" && state.family && (j.family || "Finance") !== state.family) return false;
+    if (skip !== "source" && state.source && j.source !== state.source) return false;
+    if (skip !== "city" && state.city && (j.cities || []).indexOf(state.city) < 0) return false;
+    if (skip !== "salary" && !inRange(j.sal_lo, j.sal_hi, state.salary)) return false;
+    if (skip !== "exp" && !inRange(j.exp_lo, j.exp_hi, state.exp)) return false;
+    if (skip !== "fresh" && state.fresh && (j.days_old == null || j.days_old > +state.fresh)) return false;
+    return true;
+  }
+
+  function facetCounts(skip, pick) {
+    var out = {};
+    for (var i = 0; i < JOBS.length; i++) {
+      var j = JOBS[i];
+      if (!passes(j, skip)) continue;
+      var v = pick(j);
+      if (Array.isArray(v)) {
+        for (var k = 0; k < v.length; k++) out[v[k]] = (out[v[k]] || 0) + 1;
+      } else if (v) {
+        out[v] = (out[v] || 0) + 1;
+      }
+    }
+    return out;
+  }
+
   function visible() {
-    var out = JOBS.filter(function (j) {
-      if (state.family && (j.family || "Finance") !== state.family) return false;
-      if (state.source && j.source !== state.source) return false;
-      if (state.city && (j.cities || []).indexOf(state.city) < 0) return false;
-      if (!inRange(j.sal_lo, j.sal_hi, state.salary)) return false;
-      if (!inRange(j.exp_lo, j.exp_hi, state.exp)) return false;
-      if (state.fresh && (j.days_old == null || j.days_old > +state.fresh)) return false;
-      return true;
-    });
+    var out = JOBS.filter(function (j) { return passes(j, null); });
     out.forEach(function (j) { j._m = matchJob(j); });
     out.sort(function (a, b) {
       // Sorting by match with no resume loaded would order everything by
@@ -970,6 +1236,7 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
       shownNow < list.length ? shownNow + " of " + list.length : String(list.length)));
     countBox.appendChild(document.createTextNode(
       list.length === 1 ? " role" : " roles"));
+    paintCounts(list.length);
     document.getElementById("reset").hidden = !(state.family || state.source ||
       state.city || state.salary || state.exp || state.fresh);
 
@@ -1163,28 +1430,66 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
     }
   }
 
+  // Keeps the ribbon and the family chips honest about the current
+  // filters. Runs on every render, off the same facet counter the list
+  // uses, so the two can never drift apart.
+  function paintCounts(total) {
+    var bySource = facetCounts("source", function (j) { return j.source; });
+    var ribbon = document.getElementById("ribbon");
+    Array.prototype.forEach.call(ribbon.querySelectorAll("[data-s]"), function (w) {
+      var n = bySource[w.getAttribute("data-s")] || 0;
+      w.querySelector(".n").textContent = n;
+      // Dimmed rather than removed: a source dropping to zero under your
+      // filters is information, and a ribbon that reflows as you type is
+      // harder to read than one that stays put.
+      w.style.opacity = n ? "" : ".4";
+    });
+
+    var totBox = document.getElementById("ribbon-total");
+    if (totBox) {
+      var filtered = !!(state.family || state.source || state.city ||
+                        state.salary || state.exp || state.fresh);
+      totBox.querySelector(".n").textContent = total;
+      totBox.querySelector(".l").textContent = filtered ? "matching" : "finance roles";
+    }
+
+    var byFam = facetCounts("family", function (j) { return j.family || "Finance"; });
+    var famBox = document.getElementById("fam-chips");
+    Array.prototype.forEach.call(famBox.children, function (b) {
+      var fam = b.dataset.fam;
+      var slot = b.querySelector(".n");
+      var n = fam ? (byFam[fam] || 0)
+                  : Object.keys(byFam).reduce(function (a, k) { return a + byFam[k]; }, 0);
+      if (slot) slot.textContent = n;
+      b.style.opacity = (n || b.getAttribute("aria-pressed") === "true") ? "" : ".45";
+    });
+  }
+
   function rerender() { shown = PAGE; render(); }
 
   // ---------- chrome ----------
   function paintChrome() {
     document.getElementById("fresh-at").textContent = DATA.generated_label || "unknown";
 
+    // Skeleton only - every number here is filled by paintCounts() and
+    // refilled on each render, so the ribbon tracks the filters instead
+    // of reporting the whole dataset while the list below shows 132 rows.
     var counts = (DATA.counts && DATA.counts.by_source) || {};
     var ribbon = document.getElementById("ribbon");
     var order = ["Naukri", "LinkedIn", "Workday"];
-    var seen = Object.keys(counts);
-    order.concat(seen).forEach(function (s) {
+    order.concat(Object.keys(counts)).forEach(function (s) {
       if (!counts[s] || ribbon.querySelector('[data-s="' + s + '"]')) return;
       var w = el("div", "srcstat");
       w.setAttribute("data-s", s);
       w.appendChild(el("span", "dot dot-" + s.toLowerCase()));
-      w.appendChild(el("span", "n", counts[s]));
+      w.appendChild(el("span", "n", "—"));
       w.appendChild(el("span", "l", s));
       ribbon.appendChild(w);
     });
     var tot = el("div", "srcstat total");
-    tot.appendChild(el("span", "n", (DATA.counts && DATA.counts.total) || 0));
+    tot.appendChild(el("span", "n", "—"));
     tot.appendChild(el("span", "l", "finance roles"));
+    tot.id = "ribbon-total";
     ribbon.appendChild(tot);
 
     var srcSel = document.getElementById("source");
@@ -1202,6 +1507,7 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
     var allChip = el("button", "famchip", "All finance roles");
     allChip.dataset.fam = "";
     allChip.setAttribute("aria-pressed", "true");
+    allChip.appendChild(el("span", "n", "—"));
     famBox.appendChild(allChip);
     families().forEach(function (f) {
       var b = el("button", "famchip");
