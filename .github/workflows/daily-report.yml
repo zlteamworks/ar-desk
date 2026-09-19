@@ -1,0 +1,45 @@
+# Emails the day's AR Radar numbers each evening.
+#
+# Runs in the cloud rather than on the PC that collects jobs, so the
+# report still goes out when that machine is asleep.
+name: Daily report
+
+on:
+  schedule:
+    # 15:30 UTC = 21:00 IST. GitHub's scheduler is best-effort and can run
+    # late when the queue is busy, so treat the time as "that evening"
+    # rather than exactly nine o'clock.
+    - cron: "30 15 * * *"
+  # Lets you send one on demand from the Actions tab to check the wiring,
+  # optionally for an earlier date.
+  workflow_dispatch:
+    inputs:
+      date:
+        description: "Report for a specific day (YYYY-MM-DD, IST). Blank = today."
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # daily_report.py deliberately uses only the standard library, so
+      # there is nothing to install and no supply chain to trust.
+      - name: Send the report
+        env:
+          GOATCOUNTER_CODE: ${{ secrets.GOATCOUNTER_CODE }}
+          GOATCOUNTER_TOKEN: ${{ secrets.GOATCOUNTER_TOKEN }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          REPORT_TO: ${{ secrets.REPORT_TO }}
+          REPORT_DATE: ${{ inputs.date }}
+        run: python daily_report.py

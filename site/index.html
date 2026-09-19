@@ -1,7 +1,11 @@
-<title>Job Bot</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<title>AR Radar — finance jobs across India</title>
+<meta name="description" content="Live accounts receivable and finance roles across India, scored against your own resume in your browser.">
+
+<!-- Arial is requested deliberately, and it is also the fastest choice:
+     it is already installed everywhere, so there are no font files to
+     download and no flash of unstyled text on a slow phone connection.
+     The old build pulled three families off Google Fonts before it could
+     paint anything. -->
 
 <style>
 :root {
@@ -22,9 +26,22 @@
   --crit: #A33A2E;
   --crit-soft: #F6DFDB;
   --shadow: 0 1px 2px rgba(16,32,28,.06), 0 8px 24px rgba(16,32,28,.05);
-  --display: Archivo, "Helvetica Neue", Arial, sans-serif;
-  --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
-  --mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  /* One family throughout. Arial ships tabular (fixed-width) digits, so
+     scores and salary figures still line up in a column without needing
+     a separate monospace face - --num only adds the CSS that guarantees
+     it. --label is Arial too; what made those labels read as "labels"
+     was the uppercase and letter-spacing, not the typeface. */
+  --display: Arial, "Helvetica Neue", Helvetica, sans-serif;
+  --body: Arial, "Helvetica Neue", Helvetica, sans-serif;
+  --mono: Arial, "Helvetica Neue", Helvetica, sans-serif;
+
+  /* Vertical rhythm. Every gap in the page is one of these, which is what
+     stops the layout drifting a pixel or two out of alignment each time a
+     section gets edited. */
+  --s1: 4px;  --s2: 8px;  --s3: 12px; --s4: 16px;
+  --s5: 24px; --s6: 32px; --s7: 48px;
+  --radius: 8px;
+  --maxw: 1180px;
 }
 :root:not([data-theme="light"]) {
   color-scheme: light;
@@ -81,12 +98,16 @@ body {
   line-height: 1.55;
   margin: 0;
   -webkit-font-smoothing: antialiased;
+  /* Every figure on the page sits in a column next to another figure -
+     scores, percentages, salary bands, counts. Tabular digits keep those
+     columns straight instead of jittering as the numbers change. */
+  font-variant-numeric: tabular-nums;
 }
 .wrap {
-  max-width: 1120px;
+  max-width: var(--maxw);
   margin: 0 auto;
-  padding-inline: 20px;
-  padding-block: 0 64px;
+  padding-inline: var(--s5);
+  padding-block: 0 var(--s7);
 }
 h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; }
 a { color: var(--accent); }
@@ -99,20 +120,32 @@ button { font-family: inherit; font-size: inherit; }
   background: var(--surface);
 }
 .masthead-in {
-  max-width: 1120px; margin: 0 auto;
-  padding-inline: 20px; padding-block: 18px 16px;
-  display: flex; flex-wrap: wrap; gap: 16px;
-  align-items: flex-end; justify-content: space-between;
+  max-width: var(--maxw); margin: 0 auto;
+  padding-inline: var(--s5); padding-block: var(--s5) var(--s4);
+  display: flex; flex-wrap: wrap; gap: var(--s4);
+  align-items: flex-start; justify-content: space-between;
 }
-.brand { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
-.brand h1 { font-size: 25px; font-weight: 700; letter-spacing: -.02em; }
+.brand { display: flex; align-items: center; gap: var(--s3); flex-wrap: wrap; }
+.brand h1 {
+  font-size: 27px; font-weight: 700; letter-spacing: -.025em;
+  display: flex; align-items: center; gap: 9px;
+}
+/* The mark: a radar sweep, which is the one idea in the name. Inline SVG
+   rather than an emoji so it inherits the accent colour in both themes. */
+.brand h1 svg { flex: none; color: var(--accent); }
 .brand .tag {
-  font-family: var(--mono); font-size: 11px; text-transform: uppercase;
-  letter-spacing: .1em; color: var(--accent);
-  background: var(--accent-soft); padding: 3px 7px; border-radius: 3px;
+  font-size: 10.5px; text-transform: uppercase; font-weight: 700;
+  letter-spacing: .12em; color: var(--accent);
+  background: var(--accent-soft); padding: 4px 8px; border-radius: 4px;
 }
-.brand p { margin: 2px 0 0; color: var(--muted); font-size: 13.5px; width: 100%; }
-.freshness { font-family: var(--mono); font-size: 12px; color: var(--muted); text-align: right; }
+.brand p {
+  margin: var(--s2) 0 0; color: var(--muted); font-size: 13.5px;
+  width: 100%; max-width: 74ch; line-height: 1.6;
+}
+.freshness {
+  font-size: 12px; color: var(--muted); text-align: right;
+  line-height: 1.5; flex: none;
+}
 .freshness b { color: var(--ink); font-weight: 600; }
 
 /* ---------- source ribbon ---------- */
@@ -121,13 +154,20 @@ button { font-family: inherit; font-size: inherit; }
   border-bottom: 1px solid var(--rule); background: var(--surface);
 }
 .ribbon-in {
-  max-width: 1120px; margin: 0 auto; width: 100%;
-  padding-inline: 20px; padding-block: 10px;
-  display: flex; flex-wrap: wrap; gap: 20px; align-items: center;
+  max-width: var(--maxw); margin: 0 auto; width: 100%;
+  padding-inline: var(--s5); padding-block: var(--s3);
+  display: flex; flex-wrap: wrap; gap: var(--s2) var(--s5); align-items: center;
 }
 .srcstat { display: flex; align-items: baseline; gap: 7px; }
-.srcstat .n { font-family: var(--mono); font-size: 16px; font-weight: 600; }
+.srcstat .n { font-size: 17px; font-weight: 700; letter-spacing: -.02em; }
 .srcstat .l { font-size: 12.5px; color: var(--muted); }
+/* The total is the headline figure of the ribbon, so it gets the rule
+   and a little air rather than reading as just another source. */
+.srcstat.total {
+  margin-left: auto; padding-left: var(--s5);
+  border-left: 1px solid var(--rule);
+}
+.srcstat.total .n { color: var(--accent); }
 .srcstat .dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
 .dot-naukri { background: #1F7A4D; }
 .dot-linkedin { background: #2C6FA8; }
@@ -194,15 +234,22 @@ textarea {
 .resume-loaded .who b { font-weight: 600; }
 .chipset { display: flex; flex-wrap: wrap; gap: 5px; }
 .chip {
-  font-family: var(--mono); font-size: 11px; padding: 2px 7px;
-  border-radius: 3px; background: var(--surface); border: 1px solid var(--rule);
+  font-size: 11.5px; padding: 3px 8px; font-weight: 700;
+  border-radius: 4px; background: var(--surface); border: 1px solid var(--rule);
   color: var(--ink-2);
 }
 
 /* ---------- controls ---------- */
+/* Sticky, because the list is thousands of rows long. Scrolling back to
+   the top to change a filter, then losing your place, is the single most
+   annoying thing about a long board - the controls now follow you down. */
 .controls {
-  display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
-  margin: 22px 0 10px;
+  display: flex; flex-wrap: wrap; gap: var(--s2); align-items: center;
+  margin: var(--s5) 0 var(--s3);
+  position: sticky; top: 0; z-index: 20;
+  background: var(--paper);
+  padding-block: var(--s3);
+  border-bottom: 1px solid var(--rule-soft);
 }
 .seg { display: flex; border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; background: var(--surface); }
 .seg button {
@@ -214,42 +261,60 @@ textarea {
 :root[data-theme="dark"] .seg button[aria-pressed="true"] { color: #06120F; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .seg button[aria-pressed="true"] { color: #06120F; } }
 .spacer { flex: 1 1 auto; }
-.count { font-family: var(--mono); font-size: 12.5px; color: var(--muted); }
+.count { font-size: 12.5px; color: var(--muted); white-space: nowrap; }
+.count b { color: var(--ink); font-weight: 700; }
 select {
-  font-family: var(--body); font-size: 13px; padding: 7px 10px;
+  font-family: var(--body); font-size: 13px; padding: 8px 11px;
   border: 1px solid var(--rule); border-radius: 6px;
   background: var(--surface); color: var(--ink);
+  height: 36px; cursor: pointer;
+  transition: border-color .12s;
 }
+select:hover { border-color: var(--accent); }
+/* A filter that is actually doing something should look different from
+   one sitting at its default, or you cannot tell at a glance why the
+   list is short. */
+select.set { border-color: var(--accent); color: var(--accent); font-weight: 700; }
 
 /* ---------- job rows ---------- */
-.rows { border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; background: var(--surface); }
+.rows {
+  border: 1px solid var(--rule); border-radius: var(--radius);
+  overflow: hidden; background: var(--surface); box-shadow: var(--shadow);
+}
 .row {
   display: grid;
-  grid-template-columns: 4px 58px minmax(0,1fr) auto;
-  gap: 0 14px; align-items: start;
+  grid-template-columns: 4px 66px minmax(0,1fr) auto;
+  gap: 0 var(--s4); align-items: start;
   border-bottom: 1px solid var(--rule-soft);
+  transition: background .12s;
 }
 .row:last-child { border-bottom: 0; }
+.row:hover { background: var(--surface-2); }
+.row.open { background: var(--surface-2); }
 .stripe { background: var(--rule); align-self: stretch; }
 .row.tier-hot .stripe { background: var(--good); }
 .row.tier-mid .stripe { background: var(--warn); }
 .row.tier-low .stripe { background: var(--crit); }
-.scorecell { padding: 14px 0 14px 12px; text-align: center; }
-.score { font-family: var(--mono); font-size: 19px; font-weight: 600; line-height: 1.1; }
-.score-l { font-family: var(--mono); font-size: 9.5px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.scorecell { padding: var(--s4) 0 var(--s4) var(--s3); text-align: center; }
+.score { font-size: 22px; font-weight: 700; line-height: 1.05; letter-spacing: -.03em; }
+.score-l {
+  font-size: 9.5px; text-transform: uppercase; letter-spacing: .1em;
+  color: var(--muted); font-weight: 700; margin-top: 1px;
+}
 .tier-hot .score { color: var(--good); }
 .tier-mid .score { color: var(--warn); }
 .tier-low .score { color: var(--crit); }
-.main { padding: 14px 0; min-width: 0; }
+.main { padding: var(--s4) 0; min-width: 0; }
 .jobtitle {
-  font-family: var(--display); font-size: 15.5px; font-weight: 600;
-  letter-spacing: -.01em; margin: 0 0 3px; line-height: 1.3;
+  font-family: var(--display); font-size: 16px; font-weight: 700;
+  letter-spacing: -.015em; margin: 0 0 var(--s1); line-height: 1.3;
 }
 .company { font-size: 13.5px; color: var(--ink-2); }
 .company .via {
-  font-family: var(--mono); font-size: 10px; text-transform: uppercase;
-  letter-spacing: .07em; padding: 1px 5px; border-radius: 3px;
-  margin-left: 6px; white-space: nowrap;
+  font-size: 9.5px; text-transform: uppercase; font-weight: 700;
+  letter-spacing: .08em; padding: 2px 6px; border-radius: 3px;
+  margin-left: 7px; white-space: nowrap; display: inline-block;
+  vertical-align: 1px;
 }
 .company .via-direct { color: var(--good); background: var(--good-soft); }
 .company .via-agency { color: var(--warn); background: var(--warn-soft); }
@@ -258,24 +323,58 @@ select {
   display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 7px;
   font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums;
 }
-.meta .src { font-family: var(--mono); font-size: 11px; display: inline-flex; align-items: center; gap: 5px; }
-.matchbar { margin-top: 9px; display: none; gap: 10px; align-items: center; flex-wrap: wrap; }
+.meta .src { font-size: 11.5px; font-weight: 700; display: inline-flex; align-items: center; gap: 5px; }
+.matchbar { margin-top: var(--s3); display: none; gap: var(--s3); align-items: center; flex-wrap: wrap; }
 .matchbar.on { display: flex; }
-.bar { width: 108px; height: 6px; border-radius: 3px; background: var(--surface-2); overflow: hidden; flex: none; }
-.bar i { display: block; height: 100%; background: var(--accent); }
-.matchnum { font-family: var(--mono); font-size: 12px; font-weight: 600; }
+.bar { width: 120px; height: 7px; border-radius: 4px; background: var(--surface-2); overflow: hidden; flex: none; }
+.bar i { display: block; height: 100%; background: var(--accent); border-radius: 4px; }
+.matchnum { font-size: 12.5px; font-weight: 700; }
 .matchlabel { font-size: 12px; color: var(--muted); }
-.side { padding: 14px 14px 14px 0; display: flex; flex-direction: column; gap: 7px; align-items: flex-end; }
-.applybtn {
-  display: inline-block; text-decoration: none; white-space: nowrap;
-  background: var(--accent); color: #fff; padding: 7px 14px;
-  border-radius: 6px; font-size: 13px; font-weight: 500;
+
+/* ---------- skill gaps, on the card ---------- */
+/* These used to live behind the Details button. That buried the single
+   most decision-useful thing on the row: whether the posting wants
+   something you do not have. Deciding whether to apply should not cost a
+   click, so the gap list sits on the card and Details holds the depth. */
+.gaps {
+  margin-top: var(--s3); display: flex; flex-wrap: wrap;
+  gap: var(--s1) 6px; align-items: center;
 }
+.gaps-l {
+  font-size: 10px; text-transform: uppercase; letter-spacing: .09em;
+  font-weight: 700; color: var(--muted); margin-right: var(--s1);
+}
+.gapchip {
+  font-size: 11.5px; padding: 2px 8px; border-radius: 4px;
+  background: var(--warn-soft); color: var(--warn);
+  border: 1px solid transparent; font-weight: 700; white-space: nowrap;
+}
+.gapchip.have { background: var(--good-soft); color: var(--good); }
+.gaps-rest { font-size: 11.5px; color: var(--muted); }
+.gaps-ask {
+  font-size: 12.5px; color: var(--ink-2); line-height: 1.5;
+  overflow: hidden; display: -webkit-box;
+  -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+
+.side {
+  padding: var(--s4) var(--s4) var(--s4) 0; display: flex;
+  flex-direction: column; gap: var(--s2); align-items: stretch;
+  text-align: center; flex: none;
+}
+.applybtn {
+  display: block; text-decoration: none; white-space: nowrap;
+  background: var(--accent); color: #fff; padding: 9px 20px;
+  border-radius: 6px; font-size: 13.5px; font-weight: 700;
+  transition: filter .12s;
+}
+.applybtn:hover { filter: brightness(1.08); }
 :root[data-theme="dark"] .applybtn { color: #06120F; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .applybtn { color: #06120F; } }
 .linkbtn {
-  text-decoration: none; font-size: 12px; color: var(--ink-2);
-  border: 1px solid var(--rule); padding: 5px 10px; border-radius: 6px; white-space: nowrap;
+  display: block; text-decoration: none; font-size: 12px; color: var(--ink-2);
+  border: 1px solid var(--rule); padding: 7px 10px; border-radius: 6px;
+  white-space: nowrap; transition: border-color .12s, color .12s;
 }
 .linkbtn:hover { border-color: var(--accent); color: var(--accent); }
 .expand {
@@ -284,8 +383,8 @@ select {
 }
 .row.open .expand { display: block; }
 .expand h4 {
-  font-family: var(--mono); font-size: 10.5px; text-transform: uppercase;
-  letter-spacing: .09em; color: var(--muted); margin: 0 0 6px; font-weight: 500;
+  font-size: 10.5px; text-transform: uppercase;
+  letter-spacing: .1em; color: var(--muted); margin: 0 0 var(--s2); font-weight: 700;
 }
 .expand .block { margin-bottom: 14px; }
 .expand .block:last-child { margin-bottom: 0; }
@@ -294,9 +393,17 @@ select {
 .nolink { font-size: 12.5px; color: var(--muted); font-style: italic; }
 .togg {
   background: none; border: 0; color: var(--muted); cursor: pointer;
-  font-size: 12px; padding: 2px 0; text-align: left;
+  font-size: 12.5px; padding: var(--s2) 0 0; text-align: left;
+  font-weight: 700; display: inline-flex; align-items: center; gap: 5px;
 }
 .togg:hover { color: var(--accent); }
+.togg::after {
+  content: ""; width: 5px; height: 5px; display: inline-block;
+  border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor;
+  transform: rotate(45deg) translate(-1px, -1px); transition: transform .15s;
+}
+.row.open .togg::after { transform: rotate(-135deg) translate(-2px, -2px); }
+.controls .btn { height: 36px; padding-block: 0; }
 .empty { padding: 44px 20px; text-align: center; color: var(--muted); }
 .empty h3 { font-size: 16px; margin-bottom: 6px; color: var(--ink); }
 
@@ -306,23 +413,33 @@ select {
   display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 22px;
 }
 .method h3 {
-  font-family: var(--mono); font-size: 10.5px; text-transform: uppercase;
-  letter-spacing: .09em; color: var(--muted); margin-bottom: 7px; font-weight: 500;
+  font-size: 10.5px; text-transform: uppercase;
+  letter-spacing: .1em; color: var(--muted); margin-bottom: var(--s2); font-weight: 700;
 }
 .method p { margin: 0; font-size: 13px; color: var(--ink-2); line-height: 1.6; }
 .method .weights { display: flex; flex-direction: column; gap: 5px; }
 .wrow { display: grid; grid-template-columns: 1fr 42px; gap: 8px; align-items: center; font-size: 12.5px; }
 .wbar { height: 5px; background: var(--surface-2); border-radius: 3px; overflow: hidden; }
 .wbar i { display: block; height: 100%; background: var(--accent); }
-.wval { font-family: var(--mono); font-size: 11.5px; color: var(--muted); text-align: right; }
+.wval { font-size: 11.5px; font-weight: 700; color: var(--muted); text-align: right; }
 footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 1.6; }
 
 @media (max-width: 720px) {
-  .row { grid-template-columns: 4px 48px minmax(0,1fr); }
-  .side { grid-column: 2 / -1; flex-direction: row; align-items: center; padding: 0 0 14px 0; flex-wrap: wrap; }
+  .wrap, .masthead-in, .ribbon-in { padding-inline: var(--s4); }
+  .row { grid-template-columns: 4px 54px minmax(0,1fr); gap: 0 var(--s3); }
+  .side {
+    grid-column: 2 / -1; flex-direction: row; align-items: center;
+    padding: 0 var(--s4) var(--s4) 0; flex-wrap: wrap; text-align: left;
+  }
+  .side .applybtn, .side .linkbtn { padding-inline: var(--s4); }
   .expand { grid-column: 2 / -1; }
   .brand h1 { font-size: 22px; }
   .freshness { text-align: left; }
+  .srcstat.total { margin-left: 0; padding-left: 0; border-left: 0; }
+  /* Wrapped across three lines, a sticky filter bar would cover most of
+     a phone screen. It only sticks where it stays one row. */
+  .controls { position: static; }
+  .score { font-size: 19px; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 
@@ -349,14 +466,14 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) .famchip[aria-pressed="true"] { color: #06120F; }
 }
-.famchip .n { font-family: var(--mono); font-size: 11px; opacity: .65; }
+.famchip .n { font-size: 11px; font-weight: 700; opacity: .6; }
 .famchip[aria-pressed="true"] .n { opacity: .85; }
 
 /* ---------- match-first score cell ---------- */
 .scorecell.is-match .score { color: var(--accent); }
 .score-sub {
-  font-family: var(--mono); font-size: 10px; color: var(--muted);
-  margin-top: 2px; white-space: nowrap;
+  font-size: 10px; color: var(--muted);
+  margin-top: 3px; white-space: nowrap;
 }
 .needs-resume .score { color: var(--muted); font-weight: 500; }
 
@@ -375,8 +492,16 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
 <header class="masthead">
   <div class="masthead-in">
     <div class="brand">
-      <h1>Job Bot</h1>
-      <span class="tag">Job Bot</span>
+      <h1>
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+          <circle cx="12" cy="12" r="9.2" opacity=".28"/>
+          <circle cx="12" cy="12" r="5.4" opacity=".5"/>
+          <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/>
+          <path d="M12 12L19 6.2" stroke-linecap="round"/>
+        </svg>
+        AR Radar
+      </h1>
+      <span class="tag">updated twice daily</span>
       <p>Live finance and accounting roles across India — receivables, payables, ledger, audit, tax, treasury, payroll and FP&amp;A. Add your resume and every job is scored 0–100 against <i>your</i> profile, in your own browser.</p>
     </div>
     <div class="freshness">
@@ -493,6 +618,41 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
   var JOBS = Array.isArray(DATA.jobs) ? DATA.jobs : [];
   var CFG = DATA.config || {};
 
+  // ---------- analytics ----------
+  // GoatCounter: no cookies, no cross-site identifiers, nothing personal
+  // recorded - which is why this page carries no consent banner. It
+  // answers "how many people opened the link, and did they actually use
+  // it", and nothing finer than that.
+  //
+  // Set ANALYTICS_CODE to your GoatCounter site code to switch it on.
+  // Left empty, the page is exactly as it was: no script loaded, no
+  // requests made, no tracking of any kind.
+  var ANALYTICS_CODE = "";
+
+  function loadAnalytics() {
+    if (!ANALYTICS_CODE) return;
+    var s = document.createElement("script");
+    s.async = true;
+    s.src = "//gc.zgo.at/count.js";
+    s.setAttribute("data-goatcounter",
+      "https://" + ANALYTICS_CODE + ".goatcounter.com/count");
+    document.body.appendChild(s);
+  }
+
+  // Events are what separate "opened the link" from "actually used it".
+  // Fired at most once per kind per visit: the question is how many
+  // people filtered, not how many times one person nudged a dropdown.
+  var fired = {};
+  function track(name, title) {
+    if (!ANALYTICS_CODE || fired[name]) return;
+    fired[name] = 1;
+    try {
+      if (window.goatcounter && window.goatcounter.count) {
+        window.goatcounter.count({ path: name, title: title || name, event: true });
+      }
+    } catch (e) {}
+  }
+
   var STOP = ("a an the and or of to in for with on at by from is are was were be been being as it its this that these those you your we our they them "
     + "will would can could should may might must have has had do does did not no so if then than but out up down over under again more most such own "
     + "job jobs role roles work working company companies experience year years month months team teams new ability strong good excellent responsible "
@@ -567,6 +727,9 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
     if (text.length < 40) { return false; }
     resume = { name: name || "your resume", text: text, tokens: tokens(text), skills: skillsIn(text) };
     resumeVersion++;          // invalidates every cached match
+    // The resume itself is never sent anywhere - this records only that
+    // somebody used the feature, with nothing about who or what.
+    track("used/added-resume", "Scored a resume against the board");
     try { localStorage.setItem("ardesk.resume", JSON.stringify({ name: resume.name, text: text.slice(0, 60000) })); } catch (e) {}
     paintResume();
     rerender();
@@ -801,9 +964,12 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
     var host = document.getElementById("rows");
     host.textContent = "";
     var shownNow = Math.min(shown, list.length);
-    document.getElementById("count").textContent =
-      (shownNow < list.length ? shownNow + " of " + list.length : list.length)
-      + (list.length === 1 ? " role" : " roles");
+    var countBox = document.getElementById("count");
+    countBox.textContent = "";
+    countBox.appendChild(el("b", null,
+      shownNow < list.length ? shownNow + " of " + list.length : String(list.length)));
+    countBox.appendChild(document.createTextNode(
+      list.length === 1 ? " role" : " roles"));
     document.getElementById("reset").hidden = !(state.family || state.source ||
       state.city || state.salary || state.exp || state.fresh);
 
@@ -883,12 +1049,45 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
         main.appendChild(mb);
       }
 
+      // The skill gap, on the card. Whether a posting wants something you
+      // do not have is the thing that decides an application, so it is
+      // shown up front rather than behind Details - which holds the full
+      // list and the description.
+      if (j._m && !j._m.thin && j._m.missing.length) {
+        var gp = el("div", "gaps");
+        gp.appendChild(el("span", "gaps-l", "Missing"));
+        j._m.missing.slice(0, 6).forEach(function (s) {
+          gp.appendChild(el("span", "gapchip", titleCase(s)));
+        });
+        if (j._m.missing.length > 6) {
+          gp.appendChild(el("span", "gaps-rest",
+            "+" + (j._m.missing.length - 6) + " more"));
+        }
+        main.appendChild(gp);
+      } else if (j._m && !j._m.thin && j._m.have.length) {
+        // Nothing missing is a genuinely strong signal, and printing an
+        // empty "Missing" row would bury it.
+        var gpc = el("div", "gaps");
+        gpc.appendChild(el("span", "gaps-l", "Covered"));
+        gpc.appendChild(el("span", "gapchip have",
+          "every skill this posting names"));
+        main.appendChild(gpc);
+      } else if (!resume && j.missing && j.missing !== "-") {
+        // No resume loaded yet: show what the posting asks for, so the
+        // card still says something useful about fit.
+        var gpa = el("div", "gaps");
+        gpa.appendChild(el("span", "gaps-l", "Asks for"));
+        gpa.appendChild(el("span", "gaps-ask", j.missing));
+        main.appendChild(gpa);
+      }
+
       var more = el("button", "togg", "Details");
       more.setAttribute("aria-expanded", "false");
       more.addEventListener("click", function () {
         var open = row.classList.toggle("open");
         more.setAttribute("aria-expanded", open ? "true" : "false");
         more.textContent = open ? "Hide details" : "Details";
+        if (open) track("used/opened-job", "Opened a job's details");
       });
       main.appendChild(more);
       row.appendChild(main);
@@ -898,6 +1097,9 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
       apply.href = j.url || "#";
       apply.target = "_blank";
       apply.rel = "noopener noreferrer";
+      apply.addEventListener("click", function () {
+        track("used/clicked-apply", "Clicked through to a posting");
+      });
       side.appendChild(apply);
       var pl = el("a", "linkbtn", "Find people");
       pl.href = peopleLink(j.company, j.family);
@@ -980,7 +1182,7 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
       w.appendChild(el("span", "l", s));
       ribbon.appendChild(w);
     });
-    var tot = el("div", "srcstat");
+    var tot = el("div", "srcstat total");
     tot.appendChild(el("span", "n", (DATA.counts && DATA.counts.total) || 0));
     tot.appendChild(el("span", "l", "finance roles"));
     ribbon.appendChild(tot);
@@ -1012,6 +1214,7 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
     famBox.addEventListener("click", function (e) {
       var b = e.target.closest("button"); if (!b) return;
       state.family = b.dataset.fam;
+      track("used/filtered", "Applied a filter");
       Array.prototype.forEach.call(famBox.children, function (c) {
         c.setAttribute("aria-pressed", c === b ? "true" : "false");
       });
@@ -1085,17 +1288,25 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
   ["city", "source", "salary", "exp", "fresh"].forEach(function (id) {
     document.getElementById(id).addEventListener("change", function (e) {
       state[id] = e.target.value;
+      // Highlight a dropdown that is actually narrowing the list, so it
+      // is obvious at a glance why only 40 of 3,000 rows are showing.
+      e.target.classList.toggle("set", !!e.target.value);
+      track("used/filtered", "Applied a filter");
       rerender();
     });
   });
   document.getElementById("sort").addEventListener("change", function (e) {
-    state.sort = e.target.value; rerender();
+    state.sort = e.target.value;
+    track("used/sorted", "Changed the sort order");
+    rerender();
   });
   document.getElementById("reset").addEventListener("click", function () {
     state.family = state.source = state.city = "";
     state.salary = state.exp = state.fresh = "";
     ["city", "source", "salary", "exp", "fresh"].forEach(function (id) {
-      document.getElementById(id).value = "";
+      var sel = document.getElementById(id);
+      sel.value = "";
+      sel.classList.remove("set");
     });
     Array.prototype.forEach.call(document.getElementById("fam-chips").children,
       function (c, i) { c.setAttribute("aria-pressed", i === 0 ? "true" : "false"); });
@@ -1113,5 +1324,6 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
 
   paintChrome();
   render();
+  loadAnalytics();
 })();
 </script>

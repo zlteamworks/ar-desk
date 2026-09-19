@@ -138,9 +138,31 @@ _CTX = ssl.create_default_context()
 
 # ------------------------- transport -------------------------
 
+# Workday takes its datacenters down for scheduled maintenance, typically
+# Friday evening into Saturday morning US Pacific - which is Saturday
+# morning IST, exactly when the 7am refresh runs. During the window the
+# endpoint answers 200 with an HTML "Workday is currently unavailable"
+# page instead of JSON.
+#
+# This matters because the failure is indistinguishable from a dead
+# tenant unless you look: both produce no rows. A run inside the window
+# once looked like 38 employers had silently changed their career-site
+# slugs, when nothing was wrong at all. MAINTENANCE is the sentinel that
+# tells the two apart.
+MAINTENANCE = object()
+
+_MAINT_MARKERS = ("currently unavailable", "maintenance-page",
+                  "service interruption")
+
+
+def _looks_like_maintenance(raw):
+    low = raw[:4000].lower()
+    return any(m in low for m in _MAINT_MARKERS)
+
+
 def _post_json(url, payload):
-    """One POST -> parsed JSON, or None. Never raises: a dead tenant must
-    not take the whole run down with it."""
+    """One POST -> parsed JSON, MAINTENANCE, or None. Never raises: a dead
+    tenant must not take the whole run down with it."""
     body = json.dumps(payload).encode("utf-8")
     req = urllib.request.Request(
         url, data=body, method="POST",
@@ -152,9 +174,13 @@ def _post_json(url, payload):
     )
     try:
         with urllib.request.urlopen(req, timeout=TIMEOUT_S, context=_CTX) as r:
-            return json.loads(r.read().decode("utf-8", "replace"))
+            raw = r.read().decode("utf-8", "replace")
     except Exception:
         return None
+    try:
+        return json.loads(raw)
+    except ValueError:
+        return MAINTENANCE if _looks_like_maintenance(raw) else None
 
 
 def _get_json(url):
@@ -263,7 +289,7 @@ def _search_one(args):
         "searchText": query,
     }
     data = _post_json(url, payload)
-    if not isinstance(data, dict):
+    if data is MAINTENANCE or not isinstance(data, dict):
         return []
     rows = []
     for posting in (data.get("jobPostings") or []):
@@ -363,16 +389,28 @@ def verify_tenants(verbose=True):
         data = _post_json(api_base(tenant, host, site) + "/jobs",
                           {"appliedFacets": {}, "limit": 1, "offset": 0,
                            "searchText": "accounts receivable"})
+        if data is MAINTENANCE:
+            return name, "maint", 0
         ok = isinstance(data, dict) and "jobPostings" in data
-        return name, ok, (data or {}).get("total", 0) if ok else 0
+        return name, "ok" if ok else "dead", (data.get("total", 0) if ok else 0)
 
     results = []
+    label = {"ok": "ok  ", "maint": "MAINT", "dead": "DEAD"}
     with ThreadPoolExecutor(max_workers=CONCURRENCY) as pool:
-        for name, ok, total in pool.map(check, TENANTS):
-            results.append((name, ok, total))
+        for name, status, total in pool.map(check, TENANTS):
+            results.append((name, status, total))
             if verbose:
-                print(f"  {'ok  ' if ok else 'DEAD'} {name:<22} {total}")
-    dead = [n for n, ok, _ in results if not ok]
+                print(f"  {label[status]:<5} {name:<22} {total}")
+
+    maint = [n for n, s, _ in results if s == "maint"]
+    dead = [n for n, s, _ in results if s == "dead"]
+    if verbose and maint:
+        # Say this loudly. The obvious reading of a wall of empty results
+        # is "my config broke", and that sends you re-reading 38 career
+        # URLs to fix something that fixes itself in a few hours.
+        print(f"\n  {len(maint)} tenant(s) are in a Workday maintenance "
+              f"window - NOT misconfigured. Nothing to fix; they come back "
+              f"on their own. Re-run later to see the real numbers.")
     if verbose and dead:
         print(f"\n  {len(dead)} tenant(s) need their slug re-read from the "
               f"careers URL: {', '.join(dead)}")

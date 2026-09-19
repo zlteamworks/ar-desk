@@ -1,4 +1,4 @@
-# AR Desk — finance job board
+# AR Radar — finance job board
 
 A self-updating job board for Indian accounts-receivable and finance roles.
 A bot collects postings from Naukri, LinkedIn and Workday twice a day,
@@ -17,6 +17,9 @@ calls at view time. Everything below runs in your own browser:
 - **Score your own resume** against any posting. Drop in a resume and the
   page matches it against the job text locally. Your resume is never
   uploaded or transmitted — there is nowhere for it to go.
+- **See the skill gap on the card.** Once a resume is loaded, each row
+  shows what the posting asks for that the resume never mentions — without
+  opening anything. Deciding whether to apply shouldn't cost a click.
 - **See who you'd actually reach.** Each row is labelled `direct`,
   `agency` or `unverified`. Only postings from an employer's own applicant
   tracking system, or a recognised staffing firm, get a definite label;
@@ -43,6 +46,31 @@ Kolkata and Coimbatore.
   enforces this.
 - **Login sessions, resumes and the run spreadsheet.** All excluded by
   [.gitignore](.gitignore) and kept on the machine that runs the bot.
+
+## Analytics and the daily report
+
+Both are **off until configured**, and the page loads no analytics script
+at all while they are.
+
+There is no sign-in on AR Radar, so there are no user accounts to count.
+What is measurable is how many people opened the link, how many were
+distinct, where they came from, and how many did something once they
+arrived — filtered, sorted, scored a resume, opened a job, or clicked
+through to apply. That last group is the "actively used it" number.
+
+Counting runs through [GoatCounter](https://www.goatcounter.com): no
+cookies, no cross-site identifiers, nothing that identifies a person,
+which is why the page carries no consent banner. To switch it on, set
+`ANALYTICS_CODE` near the top of the script in
+[site_template.html](site_template.html) to your GoatCounter site code and
+rebuild.
+
+[daily_report.py](daily_report.py) mails the day's numbers each evening,
+driven by [.github/workflows/daily-report.yml](.github/workflows/daily-report.yml)
+at 21:00 IST. It reads its configuration from repository secrets —
+`GOATCOUNTER_CODE`, `GOATCOUNTER_TOKEN`, `SMTP_USER`, `SMTP_PASS` and
+`REPORT_TO` — so no credential is ever committed. Standard library only;
+nothing to install.
 
 ## Running it yourself
 
