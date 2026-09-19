@@ -32,7 +32,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # enablement turns Pages on for the repo if it is not already, and
+      # sets its source to this workflow. Without it, the first run fails
+      # here until someone flips Settings -> Pages -> Source by hand.
       - uses: actions/configure-pages@v5
+        with:
+          enablement: true
 
       # Serving site/ as the Pages root puts the page at the bare URL,
       # so the shared link has no /site/ segment in it.
