@@ -1750,9 +1750,41 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
     }
   }
 
-  // Keeps the ribbon and the family chips honest about the current
-  // filters. Runs on every render, off the same facet counter the list
-  // uses, so the two can never drift apart.
+  // Live counts on the dropdown options themselves. A source dropdown
+  // reading "Naukri (3298)" above a list of 7 roles tells the same lie
+  // the ribbon used to: the number has to describe what picking THAT
+  // option would actually give you, under everything else already set.
+  //
+  // Same facet rule as the chips - the select's own filter is excluded
+  // from its own counts, so the figures stay meaningful after you have
+  // chosen something. The "All ..." row counts the jobs that survive
+  // every OTHER filter, which is what clearing this one would return.
+  function paintSelect(id, skip, match) {
+    var sel = document.getElementById(id);
+    var pool = [];
+    for (var i = 0; i < JOBS.length; i++) {
+      if (passes(JOBS[i], skip)) pool.push(JOBS[i]);
+    }
+    Array.prototype.forEach.call(sel.options, function (o) {
+      // The build bakes "Naukri (3298)" into the label, so the original
+      // text is stashed once and the count re-appended every render.
+      if (o.getAttribute("data-label") == null) {
+        o.setAttribute("data-label",
+          o.textContent.replace(/\s*\(\s*[\d,]+\s*\)\s*$/, ""));
+      }
+      var base = o.getAttribute("data-label");
+      if (!o.value) { o.textContent = base + " (" + pool.length + ")"; return; }
+      var n = 0;
+      for (var i = 0; i < pool.length; i++) {
+        if (match(pool[i], o.value)) n++;
+      }
+      o.textContent = base + " (" + n + ")";
+    });
+  }
+
+  // Keeps the ribbon, the family chips and the dropdowns honest about
+  // the current filters. Runs on every render, off the same facet
+  // counter the list uses, so they can never drift apart.
   function paintCounts(total) {
     var bySource = facetCounts("source", function (j) { return j.source; });
     var ribbon = document.getElementById("ribbon");
@@ -1782,6 +1814,14 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
                   : Object.keys(byFam).reduce(function (a, k) { return a + byFam[k]; }, 0);
       if (slot) slot.textContent = n;
       b.style.opacity = (n || b.getAttribute("aria-pressed") === "true") ? "" : ".45";
+    });
+
+    paintSelect("source", "source", function (j, v) { return j.source === v; });
+    paintSelect("city", "city", function (j, v) { return (j.cities || []).indexOf(v) >= 0; });
+    paintSelect("salary", "salary", function (j, v) { return inRange(j.sal_lo, j.sal_hi, v); });
+    paintSelect("exp", "exp", function (j, v) { return inRange(j.exp_lo, j.exp_hi, v); });
+    paintSelect("fresh", "fresh", function (j, v) {
+      return j.days_old != null && j.days_old <= +v;
     });
   }
 
@@ -1815,8 +1855,9 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
     var srcSel = document.getElementById("source");
     order.forEach(function (s) {
       if (!counts[s]) return;
+      // Bare label only - paintSelect appends the live count each render.
       var o = document.createElement("option");
-      o.value = s; o.textContent = s + " (" + counts[s] + ")";
+      o.value = s; o.textContent = s;
       srcSel.appendChild(o);
     });
 
