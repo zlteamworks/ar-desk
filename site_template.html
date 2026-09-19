@@ -1,0 +1,1117 @@
+<title>Job Bot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+
+<style>
+:root {
+  --paper: #F7F9F8;
+  --surface: #FFFFFF;
+  --surface-2: #EFF3F1;
+  --ink: #10201C;
+  --ink-2: #3A4A45;
+  --muted: #6B7A75;
+  --rule: #DCE4E1;
+  --rule-soft: #E8EDEB;
+  --accent: #0E6E5C;
+  --accent-soft: #D8EAE4;
+  --good: #1F7A4D;
+  --good-soft: #DCEFE3;
+  --warn: #A8730B;
+  --warn-soft: #F7EBD2;
+  --crit: #A33A2E;
+  --crit-soft: #F6DFDB;
+  --shadow: 0 1px 2px rgba(16,32,28,.06), 0 8px 24px rgba(16,32,28,.05);
+  --display: Archivo, "Helvetica Neue", Arial, sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+:root:not([data-theme="light"]) {
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0D1614;
+    --surface: #14201D;
+    --surface-2: #1B2926;
+    --ink: #E6EDE9;
+    --ink-2: #BCCAC5;
+    --muted: #8A9C96;
+    --rule: #26332F;
+    --rule-soft: #1E2B28;
+    --accent: #45C4A4;
+    --accent-soft: #14312A;
+    --good: #4FBE84;
+    --good-soft: #14301F;
+    --warn: #D9A344;
+    --warn-soft: #302512;
+    --crit: #E0705F;
+    --crit-soft: #331914;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 10px 28px rgba(0,0,0,.35);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0D1614;
+  --surface: #14201D;
+  --surface-2: #1B2926;
+  --ink: #E6EDE9;
+  --ink-2: #BCCAC5;
+  --muted: #8A9C96;
+  --rule: #26332F;
+  --rule-soft: #1E2B28;
+  --accent: #45C4A4;
+  --accent-soft: #14312A;
+  --good: #4FBE84;
+  --good-soft: #14301F;
+  --warn: #D9A344;
+  --warn-soft: #302512;
+  --crit: #E0705F;
+  --crit-soft: #331914;
+  --shadow: 0 1px 2px rgba(0,0,0,.4), 0 10px 28px rgba(0,0,0,.35);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 15px;
+  line-height: 1.55;
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+}
+.wrap {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding-inline: 20px;
+  padding-block: 0 64px;
+}
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; }
+a { color: var(--accent); }
+button { font-family: inherit; font-size: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+
+/* ---------- masthead ---------- */
+.masthead {
+  border-bottom: 1px solid var(--rule);
+  background: var(--surface);
+}
+.masthead-in {
+  max-width: 1120px; margin: 0 auto;
+  padding-inline: 20px; padding-block: 18px 16px;
+  display: flex; flex-wrap: wrap; gap: 16px;
+  align-items: flex-end; justify-content: space-between;
+}
+.brand { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.brand h1 { font-size: 25px; font-weight: 700; letter-spacing: -.02em; }
+.brand .tag {
+  font-family: var(--mono); font-size: 11px; text-transform: uppercase;
+  letter-spacing: .1em; color: var(--accent);
+  background: var(--accent-soft); padding: 3px 7px; border-radius: 3px;
+}
+.brand p { margin: 2px 0 0; color: var(--muted); font-size: 13.5px; width: 100%; }
+.freshness { font-family: var(--mono); font-size: 12px; color: var(--muted); text-align: right; }
+.freshness b { color: var(--ink); font-weight: 600; }
+
+/* ---------- source ribbon ---------- */
+.ribbon {
+  display: flex; flex-wrap: wrap; gap: 0;
+  border-bottom: 1px solid var(--rule); background: var(--surface);
+}
+.ribbon-in {
+  max-width: 1120px; margin: 0 auto; width: 100%;
+  padding-inline: 20px; padding-block: 10px;
+  display: flex; flex-wrap: wrap; gap: 20px; align-items: center;
+}
+.srcstat { display: flex; align-items: baseline; gap: 7px; }
+.srcstat .n { font-family: var(--mono); font-size: 16px; font-weight: 600; }
+.srcstat .l { font-size: 12.5px; color: var(--muted); }
+.srcstat .dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+.dot-naukri { background: #1F7A4D; }
+.dot-linkedin { background: #2C6FA8; }
+.dot-workday { background: #A8730B; }
+
+/* ---------- resume panel ---------- */
+.resume {
+  margin-top: 22px;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.resume-head {
+  display: flex; flex-wrap: wrap; gap: 14px;
+  align-items: center; justify-content: space-between;
+  padding: 16px 18px;
+}
+.resume-head h2 { font-size: 16px; font-weight: 600; letter-spacing: -.01em; }
+.resume-head p { margin: 3px 0 0; font-size: 13px; color: var(--muted); max-width: 62ch; }
+.resume-actions { display: flex; gap: 9px; flex-wrap: wrap; }
+.btn {
+  border: 1px solid var(--rule); background: var(--surface-2); color: var(--ink);
+  padding: 8px 14px; border-radius: 6px; cursor: pointer;
+  font-size: 13.5px; font-weight: 500; transition: border-color .15s, background .15s;
+}
+.btn:hover { border-color: var(--accent); }
+.btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+:root[data-theme="dark"] .btn-primary, :root:not([data-theme="light"]) .btn-primary { color: #06120F; }
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) .btn-primary { color: #fff; } }
+.btn-primary:hover { filter: brightness(1.08); border-color: var(--accent); }
+.dropzone {
+  border-top: 1px solid var(--rule-soft);
+  padding: 18px; background: var(--surface-2);
+  display: none;
+}
+.dropzone.open { display: block; }
+.dropzone.drag { background: var(--accent-soft); }
+.dz-inner {
+  border: 1.5px dashed var(--rule); border-radius: 7px;
+  padding: 22px 16px; text-align: center;
+}
+.dz-inner p { margin: 0 0 4px; font-size: 14px; }
+.dz-inner small { color: var(--muted); font-size: 12.5px; }
+textarea {
+  width: 100%; margin-top: 12px; min-height: 120px; padding: 11px 13px;
+  border: 1px solid var(--rule); border-radius: 6px; resize: vertical;
+  font-family: var(--body); font-size: 13.5px; line-height: 1.5;
+  background: var(--surface); color: var(--ink);
+}
+.privacy {
+  display: flex; gap: 8px; align-items: flex-start;
+  margin-top: 12px; font-size: 12.5px; color: var(--muted); line-height: 1.5;
+}
+.privacy svg { flex: none; margin-top: 2px; }
+.resume-loaded {
+  border-top: 1px solid var(--rule-soft); padding: 13px 18px;
+  display: none; gap: 14px; flex-wrap: wrap; align-items: center;
+  background: var(--good-soft);
+}
+.resume-loaded.on { display: flex; }
+.resume-loaded .who { font-size: 13.5px; }
+.resume-loaded .who b { font-weight: 600; }
+.chipset { display: flex; flex-wrap: wrap; gap: 5px; }
+.chip {
+  font-family: var(--mono); font-size: 11px; padding: 2px 7px;
+  border-radius: 3px; background: var(--surface); border: 1px solid var(--rule);
+  color: var(--ink-2);
+}
+
+/* ---------- controls ---------- */
+.controls {
+  display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+  margin: 22px 0 10px;
+}
+.seg { display: flex; border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; background: var(--surface); }
+.seg button {
+  border: 0; background: transparent; color: var(--ink-2); cursor: pointer;
+  padding: 7px 12px; font-size: 13px; border-right: 1px solid var(--rule-soft);
+}
+.seg button:last-child { border-right: 0; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: #fff; font-weight: 500; }
+:root[data-theme="dark"] .seg button[aria-pressed="true"] { color: #06120F; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .seg button[aria-pressed="true"] { color: #06120F; } }
+.spacer { flex: 1 1 auto; }
+.count { font-family: var(--mono); font-size: 12.5px; color: var(--muted); }
+select {
+  font-family: var(--body); font-size: 13px; padding: 7px 10px;
+  border: 1px solid var(--rule); border-radius: 6px;
+  background: var(--surface); color: var(--ink);
+}
+
+/* ---------- job rows ---------- */
+.rows { border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; background: var(--surface); }
+.row {
+  display: grid;
+  grid-template-columns: 4px 58px minmax(0,1fr) auto;
+  gap: 0 14px; align-items: start;
+  border-bottom: 1px solid var(--rule-soft);
+}
+.row:last-child { border-bottom: 0; }
+.stripe { background: var(--rule); align-self: stretch; }
+.row.tier-hot .stripe { background: var(--good); }
+.row.tier-mid .stripe { background: var(--warn); }
+.row.tier-low .stripe { background: var(--crit); }
+.scorecell { padding: 14px 0 14px 12px; text-align: center; }
+.score { font-family: var(--mono); font-size: 19px; font-weight: 600; line-height: 1.1; }
+.score-l { font-family: var(--mono); font-size: 9.5px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.tier-hot .score { color: var(--good); }
+.tier-mid .score { color: var(--warn); }
+.tier-low .score { color: var(--crit); }
+.main { padding: 14px 0; min-width: 0; }
+.jobtitle {
+  font-family: var(--display); font-size: 15.5px; font-weight: 600;
+  letter-spacing: -.01em; margin: 0 0 3px; line-height: 1.3;
+}
+.company { font-size: 13.5px; color: var(--ink-2); }
+.company .via {
+  font-family: var(--mono); font-size: 10px; text-transform: uppercase;
+  letter-spacing: .07em; padding: 1px 5px; border-radius: 3px;
+  margin-left: 6px; white-space: nowrap;
+}
+.company .via-direct { color: var(--good); background: var(--good-soft); }
+.company .via-agency { color: var(--warn); background: var(--warn-soft); }
+.company .via-unverified { color: var(--muted); background: var(--surface-2); }
+.meta {
+  display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 7px;
+  font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums;
+}
+.meta .src { font-family: var(--mono); font-size: 11px; display: inline-flex; align-items: center; gap: 5px; }
+.matchbar { margin-top: 9px; display: none; gap: 10px; align-items: center; flex-wrap: wrap; }
+.matchbar.on { display: flex; }
+.bar { width: 108px; height: 6px; border-radius: 3px; background: var(--surface-2); overflow: hidden; flex: none; }
+.bar i { display: block; height: 100%; background: var(--accent); }
+.matchnum { font-family: var(--mono); font-size: 12px; font-weight: 600; }
+.matchlabel { font-size: 12px; color: var(--muted); }
+.side { padding: 14px 14px 14px 0; display: flex; flex-direction: column; gap: 7px; align-items: flex-end; }
+.applybtn {
+  display: inline-block; text-decoration: none; white-space: nowrap;
+  background: var(--accent); color: #fff; padding: 7px 14px;
+  border-radius: 6px; font-size: 13px; font-weight: 500;
+}
+:root[data-theme="dark"] .applybtn { color: #06120F; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .applybtn { color: #06120F; } }
+.linkbtn {
+  text-decoration: none; font-size: 12px; color: var(--ink-2);
+  border: 1px solid var(--rule); padding: 5px 10px; border-radius: 6px; white-space: nowrap;
+}
+.linkbtn:hover { border-color: var(--accent); color: var(--accent); }
+.expand {
+  grid-column: 2 / -1; padding: 0 14px 16px 0; display: none;
+  border-top: 1px dashed var(--rule-soft); margin-top: 2px; padding-top: 13px;
+}
+.row.open .expand { display: block; }
+.expand h4 {
+  font-family: var(--mono); font-size: 10.5px; text-transform: uppercase;
+  letter-spacing: .09em; color: var(--muted); margin: 0 0 6px; font-weight: 500;
+}
+.expand .block { margin-bottom: 14px; }
+.expand .block:last-child { margin-bottom: 0; }
+.expand p { margin: 0; font-size: 13.5px; color: var(--ink-2); }
+.jd { max-height: 190px; overflow-y: auto; font-size: 13px; line-height: 1.6; color: var(--ink-2); }
+.nolink { font-size: 12.5px; color: var(--muted); font-style: italic; }
+.togg {
+  background: none; border: 0; color: var(--muted); cursor: pointer;
+  font-size: 12px; padding: 2px 0; text-align: left;
+}
+.togg:hover { color: var(--accent); }
+.empty { padding: 44px 20px; text-align: center; color: var(--muted); }
+.empty h3 { font-size: 16px; margin-bottom: 6px; color: var(--ink); }
+
+/* ---------- method ---------- */
+.method {
+  margin-top: 30px; border-top: 1px solid var(--rule); padding-top: 22px;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 22px;
+}
+.method h3 {
+  font-family: var(--mono); font-size: 10.5px; text-transform: uppercase;
+  letter-spacing: .09em; color: var(--muted); margin-bottom: 7px; font-weight: 500;
+}
+.method p { margin: 0; font-size: 13px; color: var(--ink-2); line-height: 1.6; }
+.method .weights { display: flex; flex-direction: column; gap: 5px; }
+.wrow { display: grid; grid-template-columns: 1fr 42px; gap: 8px; align-items: center; font-size: 12.5px; }
+.wbar { height: 5px; background: var(--surface-2); border-radius: 3px; overflow: hidden; }
+.wbar i { display: block; height: 100%; background: var(--accent); }
+.wval { font-family: var(--mono); font-size: 11.5px; color: var(--muted); text-align: right; }
+footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 1.6; }
+
+@media (max-width: 720px) {
+  .row { grid-template-columns: 4px 48px minmax(0,1fr); }
+  .side { grid-column: 2 / -1; flex-direction: row; align-items: center; padding: 0 0 14px 0; flex-wrap: wrap; }
+  .expand { grid-column: 2 / -1; }
+  .brand h1 { font-size: 22px; }
+  .freshness { text-align: left; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+/* ---------- job-family chips ---------- */
+/* The primary filter. Chips rather than a dropdown because the whole
+   point is that a visitor can SEE the families on offer without hunting
+   for them - most people do not know "R2R" is a thing to search for
+   until they read the word. */
+.fambar { margin: 20px 0 2px; }
+.famchips { display: flex; flex-wrap: wrap; gap: 7px; }
+.famchip {
+  border: 1px solid var(--rule); background: var(--surface);
+  color: var(--ink-2); border-radius: 999px; cursor: pointer;
+  padding: 6px 13px; font-size: 13px; font-family: inherit;
+  display: inline-flex; align-items: center; gap: 7px;
+  transition: background .12s, border-color .12s, color .12s;
+}
+.famchip:hover { border-color: var(--accent); color: var(--ink); }
+.famchip[aria-pressed="true"] {
+  background: var(--accent); border-color: var(--accent);
+  color: #fff; font-weight: 500;
+}
+:root[data-theme="dark"] .famchip[aria-pressed="true"] { color: #06120F; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .famchip[aria-pressed="true"] { color: #06120F; }
+}
+.famchip .n { font-family: var(--mono); font-size: 11px; opacity: .65; }
+.famchip[aria-pressed="true"] .n { opacity: .85; }
+
+/* ---------- match-first score cell ---------- */
+.scorecell.is-match .score { color: var(--accent); }
+.score-sub {
+  font-family: var(--mono); font-size: 10px; color: var(--muted);
+  margin-top: 2px; white-space: nowrap;
+}
+.needs-resume .score { color: var(--muted); font-weight: 500; }
+
+/* ---------- show-more ---------- */
+.more {
+  display: block; width: 100%; margin: 14px 0 4px; padding: 12px;
+  border: 1px dashed var(--rule); background: var(--surface);
+  border-radius: 8px; color: var(--ink-2); cursor: pointer;
+  font-family: inherit; font-size: 14px;
+}
+.more:hover { border-color: var(--accent); color: var(--ink); }
+</style>
+
+<script id="jobs-data" type="application/json">"__JOBS_PAYLOAD__"</script>
+
+<header class="masthead">
+  <div class="masthead-in">
+    <div class="brand">
+      <h1>Job Bot</h1>
+      <span class="tag">Job Bot</span>
+      <p>Live finance and accounting roles across India — receivables, payables, ledger, audit, tax, treasury, payroll and FP&amp;A. Add your resume and every job is scored 0–100 against <i>your</i> profile, in your own browser.</p>
+    </div>
+    <div class="freshness">
+      last refresh<br><b id="fresh-at">—</b>
+    </div>
+  </div>
+</header>
+
+<div class="ribbon"><div class="ribbon-in" id="ribbon"></div></div>
+
+<div class="wrap">
+
+  <section class="resume">
+    <div class="resume-head">
+      <div>
+        <h2>Score these jobs against your resume</h2>
+        <p>Reads your CV in this browser and matches it to each job description — skills you already have, and the ones the posting asks for that your resume never mentions.</p>
+      </div>
+      <div class="resume-actions">
+        <button class="btn btn-primary" id="open-dz">Add my resume</button>
+        <button class="btn" id="clear-resume" hidden>Remove</button>
+      </div>
+    </div>
+
+    <div class="dropzone" id="dz">
+      <div class="dz-inner" id="dz-target">
+        <p><b>Drop a PDF or Word file here</b>, or <button class="togg" id="pick" style="color:var(--accent);font-size:14px;font-weight:500">choose a file</button></p>
+        <small>.pdf · .docx · .txt — or paste the text below</small>
+        <input type="file" id="file" accept=".pdf,.docx,.txt,.doc" hidden>
+      </div>
+      <textarea id="paste" placeholder="…or paste your resume text here and it will score as you type."></textarea>
+      <div class="privacy">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+        <span><b>Your resume never leaves this device.</b> It is parsed and scored entirely in your browser — nothing is uploaded, stored on a server, or visible to anyone who built this page.</span>
+      </div>
+    </div>
+
+    <div class="resume-loaded" id="loaded">
+      <span class="who">Matching against <b id="res-name">your resume</b> — <span id="res-terms">0</span> skill terms detected</span>
+      <div class="chipset" id="res-chips"></div>
+    </div>
+  </section>
+
+  <div class="fambar">
+    <div class="famchips" id="fam-chips"></div>
+  </div>
+
+  <div class="controls">
+    <select id="city"><option value="">All cities</option></select>
+    <select id="source"><option value="">All sources</option></select>
+    <select id="salary">
+      <option value="">Any salary</option>
+      <option value="0-5">Up to 5 LPA</option>
+      <option value="5-10">5 – 10 LPA</option>
+      <option value="10-15">10 – 15 LPA</option>
+      <option value="15-25">15 – 25 LPA</option>
+      <option value="25-99">25 LPA +</option>
+    </select>
+    <select id="exp">
+      <option value="">Any experience</option>
+      <option value="0-2">0 – 2 yrs</option>
+      <option value="2-5">2 – 5 yrs</option>
+      <option value="5-10">5 – 10 yrs</option>
+      <option value="10-40">10 yrs +</option>
+    </select>
+    <select id="fresh">
+      <option value="">Any time</option>
+      <option value="1">Today &amp; yesterday</option>
+      <option value="3">Last 3 days</option>
+      <option value="7">Last week</option>
+    </select>
+    <select id="sort">
+      <option value="match">Sort: resume match</option>
+      <option value="score">Sort: interview odds</option>
+      <option value="fresh">Sort: newest first</option>
+    </select>
+    <button class="btn" id="reset" hidden>Clear filters</button>
+    <div class="spacer"></div>
+    <span class="count" id="count">—</span>
+  </div>
+
+  <div class="rows" id="rows"></div>
+
+  <section class="method">
+    <div>
+      <h3>How the odds are scored</h3>
+      <p>A weighted heuristic, not a prediction. It favours roles where a real employer is actively screening right now — those convert. It is honest about what it cannot see: undisclosed salary is marked as estimated, never implied to be in band.</p>
+    </div>
+    <div>
+      <h3>Weighting</h3>
+      <div class="weights" id="weights"></div>
+    </div>
+    <div>
+      <h3>Where these come from</h3>
+      <p id="sources-note">Naukri and LinkedIn job boards, plus employers' own Workday systems — the Workday rows are direct requisitions with no agency in between.</p>
+    </div>
+  </section>
+
+  <footer>
+    <p><b>Salary bands</b> are marked <i>Stated</i> when the employer published a range and <i>Est.</i> when it was inferred from the experience band. Always verify CTC before investing time in an application.</p>
+    <p id="foot-note"></p>
+  </footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.12.3/mammoth.browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  var DATA = {};
+  try { DATA = JSON.parse(document.getElementById("jobs-data").textContent) || {}; } catch (e) { DATA = {}; }
+  var JOBS = Array.isArray(DATA.jobs) ? DATA.jobs : [];
+  var CFG = DATA.config || {};
+
+  var STOP = ("a an the and or of to in for with on at by from is are was were be been being as it its this that these those you your we our they them "
+    + "will would can could should may might must have has had do does did not no so if then than but out up down over under again more most such own "
+    + "job jobs role roles work working company companies experience year years month months team teams new ability strong good excellent responsible "
+    + "including etc across within their his her our all any per also who which while during about into other than them each").split(" ");
+  var STOPSET = {};
+  STOP.forEach(function (w) { STOPSET[w] = 1; });
+
+  // Multi-word skills are matched as phrases, which is what an ATS actually
+  // does — "cash application" is a skill, "cash" and "application" are not.
+  var SKILLS = ["accounts receivable","order to cash","o2c","invoice to cash","cash application","cash applications",
+    "cash allocation","cash posting","collections","credit control","credit management","credit risk","dunning",
+    "dso","days sales outstanding","ar ageing","ar aging","aging","ageing","dispute management","disputes","deductions",
+    "chargebacks","short payment","remittance","billing","invoicing","e-invoicing","customer master","bad debt",
+    "provision for doubtful","write-off","unapplied cash","lockbox","debtors","reconciliation","bank reconciliation",
+    "account reconciliation","intercompany","month-end close","month end close","revenue recognition","unbilled revenue",
+    "revenue assurance","project billing","milestone billing","time and material","pass-through","sponsor reconciliation",
+    "accounts payable","general ledger","journal entries","gl reconciliation","fixed assets","variance analysis",
+    "forecasting","working capital","cash flow","audit","internal controls","sox","us gaap","ifrs","statutory reporting",
+    "sap","sap fscm","sap fi","s/4hana","oracle","oracle fusion","oracle financials","oracle r12","peoplesoft","netsuite",
+    "microsoft dynamics","dynamics 365","tally","quickbooks","workday","highradius","blackline","esker","billtrust",
+    "getpaid","coupa","concur","alteryx","advanced excel","excel","power bi","power query","vba","macros","sql","tableau",
+    "python","erp","automation","rpa","shared services","gbs","bpo","stakeholder management","process improvement",
+    "six sigma","lean","kpi","dashboard","reporting","ca","cma","cpa","mba finance","acca","m.com","b.com","ca inter",
+    // Added when the site stopped being AR-only. Without these, a payroll
+    // or tax CV matched almost nothing and scored near zero against a job
+    // it was actually perfect for - the match number has to know the
+    // vocabulary of every family the page now lists.
+    "procure to pay","p2p","three way match","3 way match","purchase order","po matching","grn",
+    "vendor reconciliation","vendor master","invoice booking","payment run","expense reimbursement",
+    "travel and expense","t&e","ap automation","duplicate payment",
+    "gst","tds","income tax","indirect tax","direct tax","transfer pricing","tax return","tax audit",
+    "tax provision","deferred tax","withholding tax","vat","gst returns","gstr","form 16","e-way bill",
+    "payroll","payroll processing","salary processing","pf","esi","gratuity","full and final",
+    "payroll reconciliation","compensation","benefits administration","attendance","statutory compliance",
+    "treasury","cash management","liquidity","hedging","forex","fx","letter of credit","bank guarantee",
+    "fund flow","cash flow forecasting","investments","borrowings","debt management",
+    "fp&a","budgeting","financial planning","financial modelling","financial modeling","mis","mis reporting",
+    "management reporting","profitability analysis","ebitda","business partnering","scenario analysis",
+    "cost accounting","costing","standard costing","inventory valuation","margin analysis",
+    "internal audit","statutory audit","risk assessment","control testing","icfr","walkthrough",
+    "trial balance","accruals","prepaid","amortisation","depreciation","consolidation","financial statements",
+    "balance sheet","p&l","cash book","petty cash","vouchers","ledger scrutiny","zoho books","xero","busy"];
+
+  function norm(s) { return (s || "").toLowerCase().replace(/\s+/g, " "); }
+
+  function tokens(text) {
+    var out = {}, m = norm(text).match(/[a-z][a-z0-9+#.&/-]{1,}/g) || [];
+    for (var i = 0; i < m.length; i++) {
+      var w = m[i].replace(/[.]+$/, "");
+      if (w.length > 1 && !STOPSET[w]) out[w] = 1;
+    }
+    return out;
+  }
+
+  function skillsIn(text) {
+    var low = norm(text), found = [];
+    for (var i = 0; i < SKILLS.length; i++) {
+      var s = SKILLS[i];
+      var re = new RegExp("(^|[^a-z0-9])" + s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "([^a-z0-9]|$)");
+      if (re.test(low)) found.push(s);
+    }
+    return found;
+  }
+
+  function titleCase(s) { return s.replace(/\b[a-z]/g, function (c) { return c.toUpperCase(); }); }
+
+  // ---------- resume state ----------
+  var resume = null; // {name, text, tokens, skills}
+
+  function setResume(name, text) {
+    text = (text || "").trim();
+    if (text.length < 40) { return false; }
+    resume = { name: name || "your resume", text: text, tokens: tokens(text), skills: skillsIn(text) };
+    resumeVersion++;          // invalidates every cached match
+    try { localStorage.setItem("ardesk.resume", JSON.stringify({ name: resume.name, text: text.slice(0, 60000) })); } catch (e) {}
+    paintResume();
+    rerender();
+    return true;
+  }
+
+  function clearResume() {
+    resume = null;
+    resumeVersion++;
+    try { localStorage.removeItem("ardesk.resume"); } catch (e) {}
+    document.getElementById("loaded").classList.remove("on");
+    document.getElementById("clear-resume").hidden = true;
+    document.getElementById("paste").value = "";
+    render();
+  }
+
+  function paintResume() {
+    var box = document.getElementById("loaded");
+    box.classList.add("on");
+    document.getElementById("clear-resume").hidden = false;
+    document.getElementById("res-name").textContent = resume.name;
+    document.getElementById("res-terms").textContent = resume.skills.length;
+    var chips = document.getElementById("res-chips");
+    chips.textContent = "";
+    resume.skills.slice(0, 10).forEach(function (s) {
+      var el = document.createElement("span");
+      el.className = "chip";
+      el.textContent = titleCase(s);
+      chips.appendChild(el);
+    });
+  }
+
+  // ---------- matching ----------
+  // An ATS reads the posting, pulls out what it asks for, and checks how much
+  // of that appears in the CV. That is what this reproduces: coverage of the
+  // job's own requirements, weighted so the title counts most.
+  // Two levels of caching, both load-bearing at this size. The skill
+  // extraction runs ~200 regexes over a 1,800-character description; with
+  // 3,500 jobs that is ~700,000 regex executions, and without these it
+  // ran again on EVERY render - including once per keystroke while
+  // someone types into the paste box, which froze the tab outright.
+  //   _js/_ts: the job's own skills. Never change, so computed once.
+  //   _m/_mv : the match, invalidated only when the resume changes.
+  var resumeVersion = 0;
+
+  function matchJob(job) {
+    if (!resume) return null;
+    if (job._m && job._mv === resumeVersion) return job._m;
+    if (!job._js) {
+      var jobText = [job.title, job.skills, job.jd].filter(Boolean).join(" . ");
+      job._js = skillsIn(jobText);
+      job._ts = skillsIn(job.title);
+    }
+    var jobSkills = job._js;
+    var titleSkills = job._ts;
+
+    var have = [], missing = [];
+    for (var i = 0; i < jobSkills.length; i++) {
+      var s = jobSkills[i];
+      var inResume = resume.skills.indexOf(s) >= 0;
+      var weight = titleSkills.indexOf(s) >= 0 ? 3 : 1;
+      (inResume ? have : missing).push({ s: s, w: weight });
+    }
+
+    var gained = 0, total = 0;
+    have.forEach(function (h) { gained += h.w; total += h.w; });
+    missing.forEach(function (h) { total += h.w; });
+
+    // Thin postings (LinkedIn rows carry no description) fall back to word
+    // overlap on the title so they still rank, but are marked as such.
+    var thin = !job.has_text;
+    var result;
+    if (total === 0) {
+      var jt = tokens(job.title), hit = 0, n = 0;
+      for (var k in jt) { n++; if (resume.tokens[k]) hit++; }
+      result = { pct: n ? Math.round((hit / n) * 100) : 0, have: [], missing: [], thin: true };
+    } else {
+      result = {
+        pct: Math.round((gained / total) * 100),
+        have: have.map(function (h) { return h.s; }),
+        missing: missing.map(function (h) { return h.s; }),
+        thin: thin
+      };
+    }
+    job._m = result;
+    job._mv = resumeVersion;
+    return result;
+  }
+
+  // ---------- file reading ----------
+  function readFile(file) {
+    var name = file.name || "your resume";
+    var low = name.toLowerCase();
+    var fr = new FileReader();
+
+    if (low.endsWith(".txt")) {
+      fr.onload = function () { ok(setResume(name, fr.result), name); };
+      fr.readAsText(file);
+      return;
+    }
+    if (low.endsWith(".docx") || low.endsWith(".doc")) {
+      fr.onload = function () {
+        if (!window.mammoth) { fail("Word reader did not load — paste the text instead."); return; }
+        window.mammoth.extractRawText({ arrayBuffer: fr.result })
+          .then(function (r) { ok(setResume(name, r.value), name); })
+          .catch(function () { fail("Could not read that Word file — paste the text instead."); });
+      };
+      fr.readAsArrayBuffer(file);
+      return;
+    }
+    if (low.endsWith(".pdf")) {
+      fr.onload = function () {
+        var lib = window.pdfjsLib;
+        if (!lib) { fail("PDF reader did not load — paste the text instead."); return; }
+        lib.getDocument({ data: fr.result }).promise.then(function (pdf) {
+          var pages = [];
+          for (var i = 1; i <= pdf.numPages; i++) pages.push(i);
+          return Promise.all(pages.map(function (n) {
+            return pdf.getPage(n).then(function (p) { return p.getTextContent(); })
+              .then(function (tc) { return tc.items.map(function (it) { return it.str; }).join(" "); });
+          }));
+        }).then(function (parts) {
+          ok(setResume(name, parts.join("\n")), name);
+        }).catch(function () { fail("Could not read that PDF — paste the text instead."); });
+      };
+      fr.readAsArrayBuffer(file);
+      return;
+    }
+    fail("Use a .pdf, .docx or .txt file — or paste the text.");
+  }
+
+  function ok(worked, name) {
+    if (!worked) fail("That file had almost no readable text. Paste the text instead.");
+    else document.getElementById("dz").classList.remove("open");
+  }
+  function fail(msg) {
+    var dz = document.getElementById("dz");
+    dz.classList.add("open");
+    var t = document.getElementById("paste");
+    t.setAttribute("placeholder", msg);
+    t.focus();
+  }
+
+  // ---------- filters ----------
+  // Everything defaults to "no filter": the visitor sees the whole board
+  // and narrows it themselves. Sort starts on resume match because that
+  // is the number this page exists to produce - with no resume loaded it
+  // falls back to odds on its own, see visible().
+  var state = { family: "", source: "", city: "", salary: "", exp: "",
+                fresh: "", sort: "match" };
+  var PAGE = 150;        // rows drawn at once
+  var shown = PAGE;      // grows via the show-more button
+
+  // Cities come pre-normalised from the exporter (j.cities), so
+  // "Bangalore", "Bengaluru" and "Hyderabad(Gachibowli)" are already one
+  // chip each rather than three strings that look alike and match badly.
+  function cities() {
+    var counts = {};
+    JOBS.forEach(function (j) {
+      (j.cities || []).forEach(function (c) { counts[c] = (counts[c] || 0) + 1; });
+    });
+    return Object.keys(counts).sort(function (a, b) {
+      return counts[b] - counts[a] || a.localeCompare(b);
+    });
+  }
+
+  function families() {
+    var counts = {};
+    JOBS.forEach(function (j) {
+      var f = j.family || "Finance";
+      counts[f] = (counts[f] || 0) + 1;
+    });
+    return Object.keys(counts)
+      .sort(function (a, b) { return counts[b] - counts[a] || a.localeCompare(b); })
+      .map(function (f) { return { name: f, n: counts[f] }; });
+  }
+
+  function inRange(lo, hi, spec) {
+    // A job matches a band if its range OVERLAPS the band, not if it sits
+    // wholly inside it: an "8-14 LPA" job belongs under "10-15" too.
+    if (!spec) return true;
+    var b = spec.split("-"), want_lo = +b[0], want_hi = +b[1];
+    if (lo == null && hi == null) return false;   // unknown: excluded once a band is chosen
+    var jlo = lo == null ? hi : lo, jhi = hi == null ? lo : hi;
+    return jhi >= want_lo && jlo <= want_hi;
+  }
+
+  function visible() {
+    var out = JOBS.filter(function (j) {
+      if (state.family && (j.family || "Finance") !== state.family) return false;
+      if (state.source && j.source !== state.source) return false;
+      if (state.city && (j.cities || []).indexOf(state.city) < 0) return false;
+      if (!inRange(j.sal_lo, j.sal_hi, state.salary)) return false;
+      if (!inRange(j.exp_lo, j.exp_hi, state.exp)) return false;
+      if (state.fresh && (j.days_old == null || j.days_old > +state.fresh)) return false;
+      return true;
+    });
+    out.forEach(function (j) { j._m = matchJob(j); });
+    out.sort(function (a, b) {
+      // Sorting by match with no resume loaded would order everything by
+      // zero, so it quietly falls back to odds until there is a resume.
+      if (state.sort === "match" && resume) {
+        return (b._m ? b._m.pct : 0) - (a._m ? a._m.pct : 0) || b.score - a.score;
+      }
+      if (state.sort === "fresh") {
+        var ad = a.days_old == null ? 999 : a.days_old, bd = b.days_old == null ? 999 : b.days_old;
+        return ad - bd || b.score - a.score;
+      }
+      return b.score - a.score;
+    });
+    return out;
+  }
+
+  function tierClass(score) { return score >= 75 ? "tier-hot" : score >= 62 ? "tier-mid" : "tier-low"; }
+
+  function peopleLink(company, family) {
+    // Used to hard-code "accounts receivable", which sent someone looking
+    // for a payroll hiring manager to the wrong team entirely.
+    var q = encodeURIComponent(company + " " + (family || "finance"));
+    return "https://www.linkedin.com/search/results/people/?keywords=" + q;
+  }
+
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+
+  function render() {
+    var list = visible();
+    var host = document.getElementById("rows");
+    host.textContent = "";
+    var shownNow = Math.min(shown, list.length);
+    document.getElementById("count").textContent =
+      (shownNow < list.length ? shownNow + " of " + list.length : list.length)
+      + (list.length === 1 ? " role" : " roles");
+    document.getElementById("reset").hidden = !(state.family || state.source ||
+      state.city || state.salary || state.exp || state.fresh);
+
+    if (!list.length) {
+      var e = el("div", "empty");
+      e.appendChild(el("h3", null, "Nothing matches those filters"));
+      e.appendChild(el("p", null, "Widen the source or city filter, or switch to Everything to include near-miss roles."));
+      host.appendChild(e);
+      return;
+    }
+
+    list.slice(0, shown).forEach(function (j) {
+      var row = el("div", "row " + tierClass(j.score));
+
+      row.appendChild(el("div", "stripe"));
+
+      // The headline number is the visitor's own resume match once there
+      // is a resume to match against. Before that there is nothing
+      // personal to show, so the cell falls back to the odds score and
+      // says so, rather than printing a meaningless 0.
+      var sc = el("div", "scorecell" + (j._m ? " is-match" : " needs-resume"));
+      if (j._m) {
+        sc.appendChild(el("div", "score", j._m.pct));
+        sc.appendChild(el("div", "score-l", "match"));
+        sc.appendChild(el("div", "score-sub", "odds " + j.score));
+      } else {
+        sc.appendChild(el("div", "score", j.score));
+        sc.appendChild(el("div", "score-l", "odds"));
+        sc.appendChild(el("div", "score-sub", "add resume"));
+      }
+      row.appendChild(sc);
+
+      var main = el("div", "main");
+      var t = el("h3", "jobtitle", j.title);
+      main.appendChild(t);
+
+      var comp = el("div", "company");
+      comp.appendChild(document.createTextNode(j.company));
+      // Three states, never two. A missing badge would read as "direct",
+      // and "direct" is only claimed where it is provable.
+      var via = j.posted_via || (j.direct ? "direct" : "unverified");
+      var viaText = { direct: "employer's own system",
+                      agency: "via agency",
+                      unverified: "employer unverified" }[via] || "employer unverified";
+      var viaEl = el("span", "via via-" + via, viaText);
+      viaEl.title = { direct: "Posted in the employer's own applicant system — no intermediary.",
+                      agency: "The company name matches a staffing or recruitment firm.",
+                      unverified: "A job board listing. We cannot confirm whether this is the employer or an agency acting for one." }[via] || "";
+      comp.appendChild(viaEl);
+      main.appendChild(comp);
+
+      var meta = el("div", "meta");
+      var src = el("span", "src");
+      src.appendChild(el("span", "dot dot-" + j.source.toLowerCase()));
+      src.appendChild(document.createTextNode(j.source));
+      meta.appendChild(src);
+      if (j.location) meta.appendChild(el("span", null, j.location));
+      meta.appendChild(el("span", null, j.age));
+      if (j.experience) meta.appendChild(el("span", null, j.experience));
+      meta.appendChild(el("span", null, j.salary_band && j.salary_band !== "-"
+        ? j.salary_band + " LPA · " + j.salary_basis
+        : j.salary_basis || "CTC not shown"));
+      if (j.applicants != null) meta.appendChild(el("span", null, j.applicants === 0 ? "be an early applicant" : j.applicants + " applicants"));
+      main.appendChild(meta);
+
+      if (j._m) {
+        var mb = el("div", "matchbar on");
+        var bar = el("div", "bar");
+        var fill = el("i");
+        fill.style.width = Math.max(2, Math.min(100, j._m.pct)) + "%";
+        bar.appendChild(fill);
+        mb.appendChild(bar);
+        mb.appendChild(el("span", "matchnum", j._m.pct + "%"));
+        mb.appendChild(el("span", "matchlabel", j._m.thin
+          ? "title match only — this source publishes no description"
+          : j._m.have.length + " of " + (j._m.have.length + j._m.missing.length) + " requirements covered"));
+        main.appendChild(mb);
+      }
+
+      var more = el("button", "togg", "Details");
+      more.setAttribute("aria-expanded", "false");
+      more.addEventListener("click", function () {
+        var open = row.classList.toggle("open");
+        more.setAttribute("aria-expanded", open ? "true" : "false");
+        more.textContent = open ? "Hide details" : "Details";
+      });
+      main.appendChild(more);
+      row.appendChild(main);
+
+      var side = el("div", "side");
+      var apply = el("a", "applybtn", "Apply");
+      apply.href = j.url || "#";
+      apply.target = "_blank";
+      apply.rel = "noopener noreferrer";
+      side.appendChild(apply);
+      var pl = el("a", "linkbtn", "Find people");
+      pl.href = peopleLink(j.company, j.family);
+      pl.target = "_blank";
+      pl.rel = "noopener noreferrer";
+      pl.title = "Open LinkedIn people search for " + j.company + " — your own connections there show first";
+      side.appendChild(pl);
+      row.appendChild(side);
+
+      var ex = el("div", "expand");
+
+      if (j.why) {
+        var b1 = el("div", "block");
+        b1.appendChild(el("h4", null, "Why this can convert"));
+        b1.appendChild(el("p", null, j.why));
+        ex.appendChild(b1);
+      }
+
+      if (j._m && !j._m.thin && j._m.missing.length) {
+        var b2 = el("div", "block");
+        b2.appendChild(el("h4", null, "Asked for, but not in your resume"));
+        var cs = el("div", "chipset");
+        j._m.missing.slice(0, 14).forEach(function (s) { cs.appendChild(el("span", "chip", titleCase(s))); });
+        b2.appendChild(cs);
+        ex.appendChild(b2);
+      } else if (!resume && j.missing && j.missing !== "-") {
+        var b2b = el("div", "block");
+        b2b.appendChild(el("h4", null, "Skills this posting asks for"));
+        b2b.appendChild(el("p", null, j.missing));
+        ex.appendChild(b2b);
+      }
+
+      var b3 = el("div", "block");
+      b3.appendChild(el("h4", null, "Job description"));
+      if (j.jd) {
+        b3.appendChild(el("div", "jd", j.jd));
+      } else {
+        b3.appendChild(el("p", "nolink", "This source is linked to rather than reproduced — open the posting to read it in full."));
+      }
+      ex.appendChild(b3);
+
+      if (j.contact && j.contact !== "-") {
+        var b4 = el("div", "block");
+        b4.appendChild(el("h4", null, "Contact left in the posting"));
+        b4.appendChild(el("p", null, j.contact));
+        ex.appendChild(b4);
+      }
+
+      row.appendChild(ex);
+      host.appendChild(row);
+    });
+
+    // Drawing several thousand rows at once locks the tab for seconds on
+    // a phone, so the list pages. Filtering resets it back to one page.
+    if (list.length > shown) {
+      var moreBtn = el("button", "more",
+        "Show " + Math.min(PAGE, list.length - shown) + " more · " +
+        (list.length - shown) + " remaining");
+      moreBtn.addEventListener("click", function () { shown += PAGE; render(); });
+      host.appendChild(moreBtn);
+    }
+  }
+
+  function rerender() { shown = PAGE; render(); }
+
+  // ---------- chrome ----------
+  function paintChrome() {
+    document.getElementById("fresh-at").textContent = DATA.generated_label || "unknown";
+
+    var counts = (DATA.counts && DATA.counts.by_source) || {};
+    var ribbon = document.getElementById("ribbon");
+    var order = ["Naukri", "LinkedIn", "Workday"];
+    var seen = Object.keys(counts);
+    order.concat(seen).forEach(function (s) {
+      if (!counts[s] || ribbon.querySelector('[data-s="' + s + '"]')) return;
+      var w = el("div", "srcstat");
+      w.setAttribute("data-s", s);
+      w.appendChild(el("span", "dot dot-" + s.toLowerCase()));
+      w.appendChild(el("span", "n", counts[s]));
+      w.appendChild(el("span", "l", s));
+      ribbon.appendChild(w);
+    });
+    var tot = el("div", "srcstat");
+    tot.appendChild(el("span", "n", (DATA.counts && DATA.counts.total) || 0));
+    tot.appendChild(el("span", "l", "finance roles"));
+    ribbon.appendChild(tot);
+
+    var srcSel = document.getElementById("source");
+    order.forEach(function (s) {
+      if (!counts[s]) return;
+      var o = document.createElement("option");
+      o.value = s; o.textContent = s + " (" + counts[s] + ")";
+      srcSel.appendChild(o);
+    });
+
+    // Family chips, built from what this run actually found. A family
+    // with no jobs gets no chip - offering a filter that returns an
+    // empty list is worse than not offering it at all.
+    var famBox = document.getElementById("fam-chips");
+    var allChip = el("button", "famchip", "All finance roles");
+    allChip.dataset.fam = "";
+    allChip.setAttribute("aria-pressed", "true");
+    famBox.appendChild(allChip);
+    families().forEach(function (f) {
+      var b = el("button", "famchip");
+      b.dataset.fam = f.name;
+      b.setAttribute("aria-pressed", "false");
+      b.appendChild(document.createTextNode(f.name));
+      b.appendChild(el("span", "n", f.n));
+      famBox.appendChild(b);
+    });
+    famBox.addEventListener("click", function (e) {
+      var b = e.target.closest("button"); if (!b) return;
+      state.family = b.dataset.fam;
+      Array.prototype.forEach.call(famBox.children, function (c) {
+        c.setAttribute("aria-pressed", c === b ? "true" : "false");
+      });
+      rerender();
+    });
+
+    var citySel = document.getElementById("city");
+    cities().forEach(function (c) {
+      var o = document.createElement("option");
+      o.value = c; o.textContent = c;
+      citySel.appendChild(o);
+    });
+
+    var weights = [["Direct employer", 26], ["Freshness", 22], ["Competition", 16],
+                   ["Family fit", 16], ["Resume fit", 12], ["Experience band", 8]];
+    var wbox = document.getElementById("weights");
+    weights.forEach(function (w) {
+      var r = el("div", "wrow");
+      var bar = el("div", "wbar");
+      var i = el("i"); i.style.width = (w[1] / 26 * 100) + "%";
+      bar.appendChild(i);
+      var lab = el("div");
+      lab.appendChild(el("div", null, w[0]));
+      lab.appendChild(bar);
+      r.appendChild(lab);
+      r.appendChild(el("div", "wval", w[1] + "%"));
+      wbox.appendChild(r);
+    });
+
+    // The old note described a salary band and a two-city list, because
+    // the feed really was cut to one person's search. It no longer is -
+    // the only cut left is freshness, and claiming otherwise would tell
+    // a visitor their filters are narrower than they are.
+    var cityList = (CFG.cities || []).join(", ") || "major Indian metros";
+    var nFam = Object.keys((DATA.counts && DATA.counts.by_family) || {}).length;
+    document.getElementById("foot-note").textContent =
+      "Every finance and accounting role this run found is listed" +
+      (nFam ? " across " + nFam + " job families" : "") +
+      " — no salary, seniority or score cut-off is applied. Collected from " +
+      cityList + ", posted within the last " + (CFG.max_days_old || 7) +
+      " days. Use the filters above to narrow it to what you want.";
+  }
+
+  // ---------- wiring ----------
+  document.getElementById("open-dz").addEventListener("click", function () {
+    document.getElementById("dz").classList.toggle("open");
+  });
+  document.getElementById("clear-resume").addEventListener("click", clearResume);
+  document.getElementById("pick").addEventListener("click", function () {
+    document.getElementById("file").click();
+  });
+  document.getElementById("file").addEventListener("change", function (e) {
+    if (e.target.files && e.target.files[0]) readFile(e.target.files[0]);
+  });
+  var dzt = document.getElementById("dz");
+  ["dragenter", "dragover"].forEach(function (ev) {
+    dzt.addEventListener(ev, function (e) { e.preventDefault(); dzt.classList.add("drag"); });
+  });
+  ["dragleave", "drop"].forEach(function (ev) {
+    dzt.addEventListener(ev, function (e) { e.preventDefault(); dzt.classList.remove("drag"); });
+  });
+  dzt.addEventListener("drop", function (e) {
+    if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) readFile(e.dataTransfer.files[0]);
+  });
+  var pasteTimer;
+  document.getElementById("paste").addEventListener("input", function (e) {
+    clearTimeout(pasteTimer);
+    var v = e.target.value;
+    pasteTimer = setTimeout(function () { if (v.trim().length > 60) setResume("pasted resume", v); }, 500);
+  });
+  ["city", "source", "salary", "exp", "fresh"].forEach(function (id) {
+    document.getElementById(id).addEventListener("change", function (e) {
+      state[id] = e.target.value;
+      rerender();
+    });
+  });
+  document.getElementById("sort").addEventListener("change", function (e) {
+    state.sort = e.target.value; rerender();
+  });
+  document.getElementById("reset").addEventListener("click", function () {
+    state.family = state.source = state.city = "";
+    state.salary = state.exp = state.fresh = "";
+    ["city", "source", "salary", "exp", "fresh"].forEach(function (id) {
+      document.getElementById(id).value = "";
+    });
+    Array.prototype.forEach.call(document.getElementById("fam-chips").children,
+      function (c, i) { c.setAttribute("aria-pressed", i === 0 ? "true" : "false"); });
+    rerender();
+  });
+
+  try {
+    var saved = JSON.parse(localStorage.getItem("ardesk.resume") || "null");
+    if (saved && saved.text) {
+      resume = { name: saved.name, text: saved.text, tokens: tokens(saved.text), skills: skillsIn(saved.text) };
+      resumeVersion++;
+      paintResume();
+    }
+  } catch (e) {}
+
+  paintChrome();
+  render();
+})();
+</script>

@@ -1,0 +1,26 @@
+# ============================================================
+#  What must never leave this machine
+# ============================================================
+#  This repo exists to deploy site/index.html. Everything that is
+#  personal, secret, or regenerable stays local.
+
+# Browser session: this folder holds the LOGGED-IN cookies for Naukri
+# and LinkedIn. Committing it would hand anyone with repo access the
+# ability to act as you on both portals. Never remove this line.
+browser_profile/
+
+# Resumes - yours and anyone else's you have scored against.
+*.docx
+*.pdf
+*.doc
+
+# Run outputs. The spreadsheet carries recruiter contact details mined
+# from job descriptions; it is for you, not for a repo.
+jobs.xlsx
+jobs_*.xlsx
+~$*.xlsx
+refresh.log
+
+# Python noise
+__pycache__/
+*.pyc
