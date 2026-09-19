@@ -1,4 +1,4 @@
-<title>AR Radar — finance jobs across India</title>
+<title>TalentTap — finance jobs across India</title>
 <meta name="description" content="Live accounts receivable and finance roles across India, scored against your own resume in your browser.">
 
 <!-- Arial is requested deliberately, and it is also the fastest choice:
@@ -115,9 +115,14 @@ button { font-family: inherit; font-size: inherit; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
 
 /* ---------- masthead ---------- */
+/* A soft wash of the accent behind the header. It gives the page a top
+   edge and a sense of somewhere to start reading, which a flat white
+   band did not - without tinting any text or costing a request. */
 .masthead {
   border-bottom: 1px solid var(--rule);
-  background: var(--surface);
+  background:
+    radial-gradient(90ch 18ch at 12% -40%, var(--accent-soft), transparent 70%),
+    var(--surface);
 }
 .masthead-in {
   max-width: var(--maxw); margin: 0 auto;
@@ -127,11 +132,11 @@ button { font-family: inherit; font-size: inherit; }
 }
 .brand { display: flex; align-items: center; gap: var(--s3); flex-wrap: wrap; }
 .brand h1 {
-  font-size: 27px; font-weight: 700; letter-spacing: -.025em;
-  display: flex; align-items: center; gap: 9px;
+  font-size: 30px; font-weight: 700; letter-spacing: -.03em;
+  display: flex; align-items: center; gap: 11px;
 }
-/* The mark: a radar sweep, which is the one idea in the name. Inline SVG
-   rather than an emoji so it inherits the accent colour in both themes. */
+/* Inline SVG rather than an emoji or an image file: it inherits the
+   accent colour in both themes and costs no request. */
 .brand h1 svg { flex: none; color: var(--accent); }
 .brand .tag {
   font-size: 10.5px; text-transform: uppercase; font-weight: 700;
@@ -173,14 +178,52 @@ button { font-family: inherit; font-size: inherit; }
 .dot-linkedin { background: #2C6FA8; }
 .dot-workday { background: #A8730B; }
 
+/* ---------- how it works ---------- */
+.steps { border-bottom: 1px solid var(--rule); background: var(--paper); }
+.steps-in {
+  max-width: var(--maxw); margin: 0 auto;
+  padding-inline: var(--s5); padding-block: var(--s4);
+  display: grid; gap: var(--s3) var(--s6);
+  grid-template-columns: repeat(auto-fit, minmax(255px, 1fr));
+}
+.step { display: grid; grid-template-columns: 26px minmax(0,1fr); gap: var(--s3); align-items: start; }
+.step-n {
+  width: 26px; height: 26px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12.5px; font-weight: 700; flex: none;
+}
+:root[data-theme="dark"] .step-n { color: #06120F; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .step-n { color: #06120F; }
+}
+.step b { display: block; font-size: 13.5px; font-weight: 700; line-height: 1.35; }
+.step span { display: block; font-size: 12.5px; color: var(--muted); line-height: 1.5; margin-top: 2px; }
+
 /* ---------- resume panel ---------- */
 .resume {
-  margin-top: 22px;
+  margin-top: var(--s5);
   background: var(--surface);
   border: 1px solid var(--rule);
-  border-radius: 8px;
+  border-radius: var(--radius);
   box-shadow: var(--shadow);
   overflow: hidden;
+  transition: border-color .2s, box-shadow .2s;
+}
+/* Until a resume is loaded this is the one action on the page worth
+   taking, and the scores below are meaningless without it - so it is
+   drawn as an invitation. Once a resume is in, it stops shouting and
+   becomes an ordinary panel. */
+.resume:not(.has-resume) {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft), var(--shadow);
+}
+.resume:not(.has-resume) .resume-head h2::after {
+  content: "start here"; margin-left: var(--s3);
+  font-size: 10px; text-transform: uppercase; letter-spacing: .12em;
+  font-weight: 700; color: var(--accent);
+  background: var(--accent-soft); padding: 3px 8px; border-radius: 4px;
+  vertical-align: 3px; white-space: nowrap;
 }
 .resume-head {
   display: flex; flex-wrap: wrap; gap: 14px;
@@ -408,6 +451,23 @@ select.set { border-color: var(--accent); color: var(--accent); font-weight: 700
 .row.tier-mid .stripe { background: var(--warn); }
 .row.tier-low .stripe { background: var(--crit); }
 .scorecell { padding: var(--s4) 0 var(--s4) var(--s3); text-align: center; }
+
+/* The match percentage as a ring. A bare number gives no sense of scale
+   - 61 reads the same as 91 at a glance - whereas a filled arc is
+   readable without being counted, which is what scanning a long list
+   needs. Drawn with conic-gradient, so no images and no library. */
+.ring {
+  position: relative; width: 46px; height: 46px; border-radius: 50%;
+  margin: 0 auto 3px;
+  background: conic-gradient(var(--accent) calc(var(--pct) * 1%), var(--rule-soft) 0);
+  display: flex; align-items: center; justify-content: center;
+}
+/* The inner disc has to match whatever the row is sitting on, or the
+   ring looks like a hole when the row highlights. */
+.ring i { position: absolute; inset: 4px; border-radius: 50%; background: var(--surface); }
+.row:hover .ring i, .row.open .ring i { background: var(--surface-2); }
+.ring b { position: relative; font-size: 14.5px; font-weight: 700; letter-spacing: -.02em; }
+
 .score { font-size: 22px; font-weight: 700; line-height: 1.05; letter-spacing: -.03em; }
 .score-l {
   font-size: 9.5px; text-transform: uppercase; letter-spacing: .1em;
@@ -552,6 +612,13 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
      a phone screen. It only sticks where it stays one row. */
   .controls { position: static; }
   .score { font-size: 19px; }
+  /* The 54px score column cannot hold a 46px ring plus its padding. */
+  .ring { width: 40px; height: 40px; }
+  .ring i { inset: 3.5px; }
+  .ring b { font-size: 13px; }
+  .steps-in { padding-block: var(--s3); gap: var(--s3); }
+  .brand h1 { font-size: 24px; }
+  .resume:not(.has-resume) .resume-head h2::after { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 
@@ -605,13 +672,18 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
   <div class="masthead-in">
     <div class="brand">
       <h1>
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-          <circle cx="12" cy="12" r="9.2" opacity=".28"/>
-          <circle cx="12" cy="12" r="5.4" opacity=".5"/>
-          <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/>
-          <path d="M12 12L19 6.2" stroke-linecap="round"/>
+        <!-- Thousands of postings narrowed to the few worth your time,
+             and the drop that comes out the bottom. -->
+        <svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true">
+          <rect width="32" height="32" rx="9" fill="currentColor"/>
+          <g stroke="#fff" stroke-width="2.3" stroke-linecap="round" fill="none">
+            <path d="M8.5 11h15"/>
+            <path d="M11.5 16h9"/>
+            <path d="M14.5 20.5h3"/>
+          </g>
+          <circle cx="16" cy="25.6" r="2.1" fill="#fff"/>
         </svg>
-        AR Radar
+        TalentTap
       </h1>
       <span class="tag">updated twice daily</span>
       <p>Live finance and accounting roles across India — receivables, payables, ledger, audit, tax, treasury, payroll and FP&amp;A. Add your resume and every job is scored 0–100 against <i>your</i> profile, in your own browser.</p>
@@ -623,6 +695,27 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
 </header>
 
 <div class="ribbon"><div class="ribbon-in" id="ribbon"></div></div>
+
+<!-- Three lines of orientation. Someone arriving from a shared link has
+     no idea what this is, and a wall of 3,000 rows does not explain
+     itself - the resume step in particular gets missed entirely without
+     being told it exists. -->
+<div class="steps">
+  <div class="steps-in">
+    <div class="step">
+      <span class="step-n">1</span>
+      <div><b>Add your resume</b><span>Read in your browser. It is never uploaded anywhere.</span></div>
+    </div>
+    <div class="step">
+      <span class="step-n">2</span>
+      <div><b>Every role gets scored against it</b><span>Including the skills a posting wants that your CV never mentions.</span></div>
+    </div>
+    <div class="step">
+      <span class="step-n">3</span>
+      <div><b>Apply where you actually fit</b><span>Employer-direct roles are flagged, so you can skip agency reposts.</span></div>
+    </div>
+  </div>
+</div>
 
 <div class="wrap">
 
@@ -857,6 +950,8 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
     document.getElementById("loaded").classList.remove("on");
     document.getElementById("clear-resume").hidden = true;
     document.getElementById("paste").value = "";
+    var panel = document.querySelector(".resume");
+    if (panel) panel.classList.remove("has-resume");
     paintATS();
     render();
   }
@@ -875,6 +970,9 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
       el.textContent = titleCase(s);
       chips.appendChild(el);
     });
+    // Stops the panel advertising itself once it has what it asked for.
+    var panel = document.querySelector(".resume");
+    if (panel) panel.classList.add("has-resume");
     paintATS();
   }
 
@@ -1579,7 +1677,11 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
       // says so, rather than printing a meaningless 0.
       var sc = el("div", "scorecell" + (j._m ? " is-match" : " needs-resume"));
       if (j._m) {
-        sc.appendChild(el("div", "score", j._m.pct));
+        var ring = el("div", "ring");
+        ring.style.setProperty("--pct", Math.max(0, Math.min(100, j._m.pct)));
+        ring.appendChild(el("i"));
+        ring.appendChild(el("b", null, j._m.pct));
+        sc.appendChild(ring);
         sc.appendChild(el("div", "score-l", "match"));
         sc.appendChild(el("div", "score-sub", "odds " + j.score));
       } else {

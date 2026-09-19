@@ -1,4 +1,4 @@
-# AR Radar — finance job board
+# TalentTap — finance job board
 
 A self-updating job board for Indian accounts-receivable and finance roles.
 A bot collects postings from Naukri, LinkedIn and Workday twice a day,
@@ -52,7 +52,7 @@ Kolkata and Coimbatore.
 Both are **off until configured**, and the page loads no analytics script
 at all while they are.
 
-There is no sign-in on AR Radar, so there are no user accounts to count.
+There is no sign-in on TalentTap, so there are no user accounts to count.
 What is measurable is how many people opened the link, how many were
 distinct, where they came from, and how many did something once they
 arrived — filtered, sorted, scored a resume, opened a job, or clicked

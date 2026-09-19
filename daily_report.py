@@ -1,5 +1,5 @@
 """
-DAILY REPORT  -  who used AR Radar today, mailed out each evening
+DAILY REPORT  -  who used TalentTap today, mailed out each evening
 =================================================================
 
 Run by .github/workflows/daily-report.yml on a schedule. Pulls the day's
@@ -8,7 +8,7 @@ emails a short summary.
 
 WHAT THIS CAN AND CANNOT TELL YOU
 ---------------------------------
-AR Radar is a static page. There are no accounts and no sign-in, so there
+TalentTap is a static page. There are no accounts and no sign-in, so there
 is no such thing as "users logged in today" - nobody logs in to anything.
 What exists is:
 
@@ -25,7 +25,7 @@ from events the page fires, each at most once per visit.
 
 CONFIGURATION (all via environment, nothing in this file)
 ---------------------------------------------------------
-    GOATCOUNTER_CODE   your site code, e.g. "ar-radar"
+    GOATCOUNTER_CODE   your site code, e.g. "talenttap"
     GOATCOUNTER_TOKEN  API token from GoatCounter -> Settings -> API
     SMTP_USER          gmail address the report is sent FROM
     SMTP_PASS          a Gmail APP PASSWORD, not the account password
@@ -60,9 +60,9 @@ EVENTS = {
     "used/clicked-apply": "Clicked through to apply",
 }
 
-# The repo is still named ar-desk, from before the site was called AR
-# Radar. Renaming it would change this URL and break the link already
-# shared, so the name stayed put.
+# The repo is still named ar-desk, from before the site had its current
+# name. Renaming the repo would change this URL and break the link that
+# has already been shared, so the repo name stayed put.
 SITE_URL = "https://zlteamworks.github.io/ar-desk/"
 
 
@@ -197,7 +197,7 @@ def render(day, traffic, board):
         board_html = f'<p style="color:#a33a2e">Could not read jobs.json: {board.get("error")}</p>'
 
     return f"""<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;color:#10201c;max-width:640px">
-  <h2 style="margin:0 0 4px">AR Radar — {day}</h2>
+  <h2 style="margin:0 0 4px">TalentTap — {day}</h2>
   <p style="margin:0 0 22px;color:#6b7a75;font-size:13px">
     <a href="{SITE_URL}" style="color:#0e6e5c">{SITE_URL}</a>
   </p>
@@ -216,14 +216,14 @@ def render(day, traffic, board):
 
   <p style="margin:30px 0 0;color:#8a9a95;font-size:12px;line-height:1.6">
     Counted without cookies and without anything that identifies a person.
-    There is no sign-in on AR Radar, so these are visitors, not accounts.
+    There is no sign-in on TalentTap, so these are visitors, not accounts.
   </p>
 </div>"""
 
 
 def send(html, day, to_addrs, user, password):
     msg = EmailMessage()
-    msg["Subject"] = f"AR Radar — daily report, {day}"
+    msg["Subject"] = f"TalentTap — daily report, {day}"
     msg["From"] = user
     msg["To"] = ", ".join(to_addrs)
     msg.set_content("This report is formatted in HTML. "

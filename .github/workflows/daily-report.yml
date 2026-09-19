@@ -1,4 +1,4 @@
-# Emails the day's AR Radar numbers each evening.
+# Emails the day's TalentTap numbers each evening.
 #
 # Runs in the cloud rather than on the PC that collects jobs, so the
 # report still goes out when that machine is asleep.
