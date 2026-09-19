@@ -1766,8 +1766,10 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
       if (passes(JOBS[i], skip)) pool.push(JOBS[i]);
     }
     Array.prototype.forEach.call(sel.options, function (o) {
-      // The build bakes "Naukri (3298)" into the label, so the original
-      // text is stashed once and the count re-appended every render.
+      // Stash the bare label once, then re-append the live count every
+      // render. The strip is defensive: it also cleans a count that was
+      // already in the markup, so a hand-written option like
+      // "Naukri (3298)" cannot end up as "Naukri (3298) (7)".
       if (o.getAttribute("data-label") == null) {
         o.setAttribute("data-label",
           o.textContent.replace(/\s*\(\s*[\d,]+\s*\)\s*$/, ""));
