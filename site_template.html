@@ -289,6 +289,68 @@ textarea {
   line-height: 1.6; padding-top: var(--s3); border-top: 1px solid var(--rule-soft);
 }
 
+/* ---- the fix list: the part that is actually worth reading ---- */
+.ats-fixes { margin-top: var(--s5); }
+.ats-fixes h4 {
+  font-size: 10.5px; text-transform: uppercase; letter-spacing: .1em;
+  color: var(--muted); font-weight: 700; margin: 0 0 var(--s3);
+}
+.ats-fixlist { margin: 0; padding-left: 0; list-style: none; counter-reset: fix; }
+.ats-fixlist li {
+  counter-increment: fix; position: relative;
+  padding: var(--s3) 0 var(--s3) var(--s6);
+  border-top: 1px solid var(--rule-soft);
+}
+.ats-fixlist li:first-child { border-top: 0; }
+.ats-fixlist li::before {
+  content: counter(fix); position: absolute; left: 0; top: var(--s3);
+  width: 21px; height: 21px; border-radius: 50%;
+  background: var(--accent-soft); color: var(--accent);
+  font-size: 11px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+.ats-fixlist b { font-size: 13.5px; font-weight: 700; }
+.ats-lost {
+  font-size: 11px; font-weight: 700; color: var(--crit);
+  background: var(--crit-soft); padding: 1px 6px; border-radius: 3px;
+  margin-left: var(--s2);
+}
+.ats-fixtext {
+  display: block; margin-top: var(--s1);
+  font-size: 12.5px; color: var(--ink-2); line-height: 1.55;
+}
+.ats-allclear {
+  margin: var(--s5) 0 0; padding: var(--s3) var(--s4);
+  background: var(--good-soft); color: var(--good);
+  border-radius: 6px; font-size: 13px; font-weight: 700;
+}
+
+/* ---- collapsible scorecard and template ---- */
+.ats-details { margin-top: var(--s4); border-top: 1px solid var(--rule-soft); }
+.ats-details summary {
+  cursor: pointer; padding: var(--s3) 0; font-size: 13px;
+  font-weight: 700; color: var(--ink-2); list-style-position: inside;
+}
+.ats-details summary:hover { color: var(--accent); }
+.ats-details[open] summary { color: var(--accent); }
+.ats-group { margin-bottom: var(--s4); }
+.ats-grouphead {
+  display: flex; justify-content: space-between; align-items: baseline;
+  gap: var(--s3); padding-bottom: var(--s2); margin-bottom: var(--s3);
+  border-bottom: 1px solid var(--rule-soft);
+}
+.ats-grouphead b { font-size: 12.5px; font-weight: 700; }
+.ats-grouphead span { font-size: 12px; color: var(--muted); font-weight: 700; }
+.ats-tplnote { margin: 0 0 var(--s3); font-size: 12.5px; color: var(--muted); line-height: 1.55; }
+.ats-tpl {
+  margin: 0 0 var(--s3); padding: var(--s4);
+  background: var(--surface-2); border: 1px solid var(--rule);
+  border-radius: 6px; overflow-x: auto;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 12px; line-height: 1.6; color: var(--ink-2);
+  white-space: pre; tab-size: 2;
+}
+
 /* ---------- controls ---------- */
 /* Sticky, because the list is thousands of rows long. Scrolling back to
    the top to change a filter, then losing your place, is the single most
@@ -818,140 +880,327 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
 
   // ---------- ATS readiness ----------
   // A resume is read by software before a person sees it. That software
-  // does not judge your career - it tries to PARSE you: find the contact
-  // block, segment the sections, read the dates, pull the skills. What is
-  // checked here is whether that parse can succeed, which is knowable
-  // from the text alone.
+  // does not judge a career - it tries to PARSE one: find the contact
+  // block, segment the sections, read the dates, pull the skills. What
+  // is checked here is whether that parse succeeds, and whether what it
+  // finds is evidence or filler. Both are knowable from the text alone.
   //
-  // What this deliberately does not claim: that it reproduces any named
+  // WHY THIS IS GRADED, NOT TICKED
+  // The first version of this was seven pass/fail checks added together,
+  // and it handed a real CV 100/100. That is a misleading number: no CV
+  // is finished, and a score that says otherwise stops someone improving
+  // something that could still be much better. Every check here is
+  // graded on a curve instead - partial credit for partial work - and
+  // the demanding ones (a summary section, quantified bullets, action
+  // verbs, no cliches) are things most real resumes only half do. A
+  // score in the seventies is a good CV. The nineties should be rare and
+  // earned, and the panel says so.
+  //
+  // What this deliberately does NOT claim: that it reproduces any named
   // vendor's scoring. Nobody outside those companies can, and a number
-  // dressed up as "your Workday score" would be a lie. The panel says
-  // plainly what it measured.
-  var ATS_SECTIONS = [
-    ["experience", /\b(work\s+experience|professional\s+experience|employment(\s+history)?|work\s+history|career\s+(history|summary)|experience)\b/i],
-    ["education", /\b(education|academic|qualifications?|educational\s+background)\b/i],
-    ["skills", /\b(skills|core\s+competenc|technical\s+skills|areas?\s+of\s+expertise|proficienc)/i]
-  ];
+  // presented as "your Workday score" would be a fabrication.
+
+  var ATS_SECTIONS = {
+    experience: /\b(work\s+experience|professional\s+experience|employment(\s+history)?|work\s+history|career\s+(history|summary)|experience)\b/i,
+    education: /\b(education|academic|qualifications?|educational\s+background)\b/i,
+    skills: /\b(skills|core\s+competenc|technical\s+skills|areas?\s+of\s+expertise|proficienc|key\s+strengths)/i,
+    summary: /\b(summary|profile|objective|professional\s+summary|career\s+objective|about\s+me)\b/i
+  };
 
   var ATS_EMAIL = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/;
   var ATS_PHONE = /(?:\+?\d{1,3}[\s-]?)?(?:\(\d{2,4}\)[\s-]?)?\d{5}[\s-]?\d{5}|\+?\d{10,13}/;
-  // A year on its own, or a month-year pair - the two shapes a parser
-  // looks for when it tries to build an employment timeline.
-  var ATS_DATE = /\b(19|20)\d{2}\b|\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*[\s.'-]*\d{2,4}\b/gi;
-  // Numbers that carry a unit or a magnitude: an achievement a recruiter
-  // can weigh, as opposed to a bare figure in an address or a date.
-  var ATS_QUANT = /\d+\s*%|\b(?:inr|rs\.?|usd|\$|₹)\s*\d|\b\d+(?:\.\d+)?\s*(?:cr|crore|lakh|lacs?|lpa|k|mn|million|bn)\b|\breduced\b|\bimproved\b|\bincreased\b|\bsaved\b/gi;
+  var ATS_LINKEDIN = /linkedin\.com\/[a-z]{2,}\/[A-Za-z0-9._-]+/i;
+  var ATS_CITY = /\b(bengaluru|bangalore|chennai|hyderabad|mumbai|pune|delhi|gurgaon|gurugram|noida|kolkata|coimbatore|ahmedabad|jaipur|kochi|chandigarh|indore|india)\b/i;
+
+  // A range, not a lone year: "Mar 2021 - Jul 2024", "2019 to Present".
+  // A timeline is what experience filters run against, and a bare year
+  // sitting next to a degree is not a timeline.
+  var ATS_RANGE = /((19|20)\d{2}|(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*[\s.'-]*(19|20)?\d{2})\s*(-|–|—|to|until|through)\s*((19|20)\d{2}|(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*[\s.'-]*(19|20)?\d{2}|present|current|date|now)/gi;
+  var ATS_MONTHYEAR = /\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*[\s.'-]*(19|20)\d{2}\b/gi;
+
+  var ATS_NUMBER = /\d+\s*%|\b(?:inr|rs\.?|usd|\$|₹)\s*[\d.]|\b\d[\d,.]*\s*(?:cr|crore|lakh|lacs?|lpa|k|mn|million|bn|days?|hours?|fte|invoices?|accounts?|clients?|customers?)\b|\b\d{2,}\b/i;
+
+  var ATS_VERBS = ("managed led reduced improved increased implemented delivered built designed "
+    + "automated streamlined recovered resolved negotiated reconciled processed analysed analyzed "
+    + "coordinated developed established achieved drove owned migrated standardised standardized "
+    + "reviewed audited forecast forecasted prepared monitored collaborated trained supervised "
+    + "optimised optimized eliminated accelerated secured initiated launched maintained handled "
+    + "executed cut saved raised strengthened simplified consolidated").split(" ");
+
+  var ATS_CLICHE = ["hard working", "hard-working", "team player", "go-getter",
+    "think outside the box", "detail oriented", "detail-oriented", "results driven",
+    "results-driven", "self motivated", "self-motivated", "dynamic professional",
+    "proven track record", "excellent communication skills", "responsible for",
+    "duties included", "good communication", "quick learner", "highly motivated"];
+
+  var ATS_PRONOUN = /\b(i|me|my|myself|we|our|us)\b/gi;
+
+  var ATS_TOOLS = ["sap", "oracle", "netsuite", "tally", "quickbooks", "workday",
+    "highradius", "blackline", "esker", "billtrust", "getpaid", "coupa", "concur",
+    "peoplesoft", "dynamics 365", "microsoft dynamics", "s/4hana", "oracle fusion",
+    "zoho books", "xero", "power bi", "tableau", "alteryx", "sql", "excel"];
+
+  var ATS_CERTS = /\b(ca\b|chartered accountant|cma|cpa|acca|mba|m\.?com|b\.?com|ca\s+inter|cfa|six sigma|icwa)/i;
+
+  var ATS_BULLET = /^[\s]*[•▪●◦‣⁃*·\-–]\s+/;
+
+  function atsLines(text) {
+    return text.split(/\r?\n/)
+      .map(function (l) { return l.replace(/\s+$/, ""); })
+      .filter(function (l) { return l.trim().length > 0; });
+  }
+
+  // What counts as a bullet. Extracted PDF and Word text often loses the
+  // bullet glyph entirely, so a line that simply reads like an
+  // achievement - a sentence-length line opening on an action verb -
+  // counts too. Otherwise every PDF would be told it has no bullets.
+  function atsBullets(lines) {
+    var out = [];
+    for (var i = 0; i < lines.length; i++) {
+      var raw = lines[i];
+      var body = raw.replace(ATS_BULLET, "").trim();
+      if (!body) continue;
+      var looksBullet = ATS_BULLET.test(raw);
+      var first = (body.split(/\s+/)[0] || "").toLowerCase().replace(/[^a-z]/g, "");
+      var verbStart = ATS_VERBS.indexOf(first) >= 0;
+      if (looksBullet || (verbStart && body.length > 25 && body.length < 400)) {
+        out.push(body);
+      }
+    }
+    return out;
+  }
 
   function atsReport(r) {
     var text = r.text || "";
+    var low = text.toLowerCase();
+    var lines = atsLines(text);
+    var bullets = atsBullets(lines);
     var words = (text.match(/[A-Za-z][A-Za-z'’-]*/g) || []).length;
-    var checks = [];
-    var score = 0;
 
-    function add(state, points, label, detail) {
-      checks.push({ state: state, label: label, detail: detail });
-      score += points;
+    var groups = [];
+
+    function group(name, checks) {
+      var got = 0, max = 0;
+      checks.forEach(function (c) { got += c.got; max += c.max; });
+      groups.push({ name: name, got: got, max: max, checks: checks });
     }
 
-    // 1. Contact block (18). The first thing a parser looks for, and a
-    //    resume it cannot get an email out of is one nobody can reply to.
+    function chk(label, got, max, detail, fix) {
+      var state = got >= max ? "pass" : got > 0 ? "warn" : "fail";
+      return { label: label, got: got, max: max, state: state,
+               detail: detail, fix: fix || "" };
+    }
+
+    // ---- A. Machine readability (20) ----
+    var oddChars = (text.match(/[|\t│┃┌┐└┘]/g) || []).length;
+    var oddPer100 = words ? oddChars / words * 100 : 99;
+
+    group("Machine readability", [
+      chk("Text extracts from the file",
+        words >= 250 ? 8 : words >= 120 ? 4 : 0, 8,
+        words + " words were readable.",
+        words < 250 ? "Very little text came out, which usually means a scanned or image-based PDF, or text trapped in shapes. Export a fresh PDF straight from Word with File - Save As, not a scan or a screenshot." : ""),
+
+      chk("Single-column layout",
+        oddPer100 < 1 ? 6 : oddPer100 < 3 ? 3 : 0, 6,
+        oddChars + " table or column characters found.",
+        oddPer100 >= 1 ? "Multi-column and table layouts come out of a parser scrambled - the right-hand column gets interleaved into the left. Put everything in one column, top to bottom." : ""),
+
+      chk("Bullet points, not paragraphs",
+        bullets.length >= 8 ? 6 : bullets.length >= 3 ? 3 : 0, 6,
+        bullets.length + " bullet-style lines found.",
+        bullets.length < 8 ? "Break each role into 3-5 short bullets. Dense paragraphs hide the achievements a parser and a reader both scan for." : "")
+    ]);
+
+    // ---- B. Contact block (12) ----
     var hasEmail = ATS_EMAIL.test(text);
     var hasPhone = ATS_PHONE.test(text);
-    if (hasEmail && hasPhone) {
-      add("pass", 18, "Contact details found", "Email and phone number are both readable.");
-    } else if (hasEmail || hasPhone) {
-      add("warn", 9, "Only one way to reach you",
-        "Found " + (hasEmail ? "an email but no phone number" : "a phone number but no email") +
-        ". Put both in the top few lines, as plain text.");
-    } else {
-      add("fail", 0, "No contact details found",
-        "No email or phone could be read. If yours sits in a header, footer or image, most parsers never see it — move it into the body.");
-    }
+    var hasIn = ATS_LINKEDIN.test(text);
+    var hasCity = ATS_CITY.test(text);
 
-    // 2. Sections (18). An ATS segments the document by heading; without
-    //    headings everything lands in one undifferentiated blob.
-    var found = [], missingSections = [];
-    ATS_SECTIONS.forEach(function (s) {
-      (s[1].test(text) ? found : missingSections).push(s[0]);
+    group("Contact block", [
+      chk("Email address", hasEmail ? 4 : 0, 4,
+        hasEmail ? "Found." : "None found.",
+        hasEmail ? "" : "No email could be read. If yours is in a page header, a footer or an image, most parsers never see it - move it into the first two lines of the body."),
+      chk("Phone number", hasPhone ? 4 : 0, 4,
+        hasPhone ? "Found." : "None found.",
+        hasPhone ? "" : "Add a plain mobile number near the top, digits only, no icons."),
+      chk("City", hasCity ? 2 : 0, 2,
+        hasCity ? "Found." : "No city named.",
+        hasCity ? "" : "Name your city. Recruiters filter by location before anything else, and a CV with no city often gets dropped from location searches."),
+      chk("LinkedIn URL", hasIn ? 2 : 0, 2,
+        hasIn ? "Found." : "None found.",
+        hasIn ? "" : "Add your LinkedIn profile URL as plain text. It is the first thing a recruiter checks after the CV.")
+    ]);
+
+    // ---- C. Structure (16) ----
+    var secs = {};
+    for (var k in ATS_SECTIONS) secs[k] = ATS_SECTIONS[k].test(text);
+
+    group("Section structure", [
+      chk("Experience heading", secs.experience ? 5 : 0, 5,
+        secs.experience ? "Found." : "Not found.",
+        secs.experience ? "" : "Add a heading that literally reads Work Experience on its own line. A parser segments the document by these words."),
+      chk("Education heading", secs.education ? 4 : 0, 4,
+        secs.education ? "Found." : "Not found.",
+        secs.education ? "" : "Add an Education heading on its own line."),
+      chk("Skills heading", secs.skills ? 4 : 0, 4,
+        secs.skills ? "Found." : "Not found.",
+        secs.skills ? "" : "Add a Skills section listing your tools and domains as plain comma-separated text."),
+      chk("Summary or profile", secs.summary ? 3 : 0, 3,
+        secs.summary ? "Found." : "Not found.",
+        secs.summary ? "" : "Open with a 2-3 line Professional Summary naming your domain, years and biggest result. It is the only part many recruiters read in full.")
+    ]);
+
+    // ---- D. Timeline (12) ----
+    var ranges = text.match(ATS_RANGE) || [];
+    var monthYears = text.match(ATS_MONTHYEAR) || [];
+
+    group("Employment timeline", [
+      chk("Date ranges on roles",
+        ranges.length >= 3 ? 8 : ranges.length >= 1 ? 4 : 0, 8,
+        ranges.length + " date range" + (ranges.length === 1 ? "" : "s") + " found.",
+        ranges.length < 3 ? "Give every role an explicit start and end, like Mar 2021 - Jul 2024, or Mar 2021 - Present. A lone year is not a range, and without ranges an experience filter cannot place you." : ""),
+      chk("Month and year, not just year",
+        monthYears.length >= 2 ? 4 : monthYears.length >= 1 ? 2 : 0, 4,
+        monthYears.length + " month-year date" + (monthYears.length === 1 ? "" : "s") + " found.",
+        monthYears.length < 2 ? "Write dates as Mar 2021, not 03/21 or just 2021. Ambiguous formats get parsed wrong or dropped." : "")
+    ]);
+
+    // ---- E. Evidence (18) ----
+    var quantBullets = 0, verbBullets = 0;
+    bullets.forEach(function (b) {
+      if (ATS_NUMBER.test(b)) quantBullets++;
+      var first = (b.split(/\s+/)[0] || "").toLowerCase().replace(/[^a-z]/g, "");
+      if (ATS_VERBS.indexOf(first) >= 0) verbBullets++;
     });
-    if (found.length === 3) {
-      add("pass", 18, "Standard sections present", "Experience, education and skills headings were all found.");
-    } else if (found.length === 2) {
-      add("warn", 12, "One section heading missing",
-        "No clear " + missingSections.join(" or ") + " heading. Use the ordinary word as its own line.");
-    } else {
-      add("fail", found.length * 6, "Section headings unclear",
-        "Missing: " + missingSections.join(", ") + ". Plain headings beat creative ones — a parser looks for the literal words.");
-    }
+    var qPct = bullets.length ? Math.round(quantBullets / bullets.length * 100) : 0;
+    var vPct = bullets.length ? Math.round(verbBullets / bullets.length * 100) : 0;
 
-    // 3. Dates (14). No dates means no timeline, and a timeline is what
-    //    experience filters run against.
-    var dates = text.match(ATS_DATE) || [];
-    if (dates.length >= 4) {
-      add("pass", 14, "Employment dates readable", dates.length + " date references found.");
-    } else if (dates.length >= 1) {
-      add("warn", 7, "Few dates found",
-        "Only " + dates.length + " date reference" + (dates.length === 1 ? "" : "s") +
-        ". Give every role a start and end, like “Mar 2021 – Jul 2024”.");
-    } else {
-      add("fail", 0, "No dates found",
-        "Nothing a parser can read as an employment date. Experience filters will skip you entirely.");
-    }
+    group("Evidence and impact", [
+      chk("Bullets carrying a number",
+        qPct >= 40 ? 10 : qPct >= 25 ? 7 : qPct >= 10 ? 4 : quantBullets ? 2 : 0, 10,
+        quantBullets + " of " + bullets.length + " bullets (" + qPct + "%) contain a figure.",
+        qPct < 40 ? "Aim for about 4 in 10. In finance the numbers are the evidence: DSO reduced by 12 days, INR 4.2 cr recovered, 1,800 invoices a month, 40% fewer disputes. Replace a duty with its result." : ""),
+      chk("Bullets opening on an action verb",
+        vPct >= 50 ? 8 : vPct >= 30 ? 5 : vPct >= 10 ? 3 : 0, 8,
+        verbBullets + " of " + bullets.length + " bullets (" + vPct + "%) start with a verb.",
+        vPct < 50 ? "Start each bullet with what you did: Reduced, Recovered, Reconciled, Automated. Not Responsible for or Was involved in." : "")
+    ]);
 
-    // 4. Quantified results (14).
-    var quant = text.match(ATS_QUANT) || [];
-    if (quant.length >= 5) {
-      add("pass", 14, "Achievements are quantified", quant.length + " figures or outcome words found.");
-    } else if (quant.length >= 2) {
-      add("warn", 9, "Could use more numbers",
-        "Only " + quant.length + " quantified points. DSO reduced, collections recovered, ledgers handled — put the figure in.");
-    } else {
-      add("fail", 3, "No measurable results",
-        "Nothing quantified. In finance especially, the numbers are the evidence.");
-    }
+    // ---- F. Keywords (14) ----
+    var nSkills = r.skills.length;
+    var tools = ATS_TOOLS.filter(function (t) { return low.indexOf(t) >= 0; });
+    var hasCert = ATS_CERTS.test(text);
 
-    // 5. Length (12).
-    if (words >= 350 && words <= 1200) {
-      add("pass", 12, "Good length", words + " words — enough detail without padding.");
-    } else if (words < 350) {
-      add("warn", 5, "Quite short",
-        words + " words. Thin resumes give a matcher little to work with; 400–800 is a comfortable range.");
-    } else {
-      add("warn", 6, "On the long side",
-        words + " words. Anything past two pages tends to dilute the relevant parts.");
-    }
+    group("Keywords a filter looks for", [
+      chk("Finance vocabulary",
+        nSkills >= 20 ? 8 : nSkills >= 12 ? 6 : nSkills >= 6 ? 4 : nSkills ? 2 : 0, 8,
+        nSkills + " recognised finance terms.",
+        nSkills < 20 ? "Use the exact words the postings use. Every job below shows the terms it asks for that your CV does not mention - those are your list." : ""),
+      chk("Systems and tools named",
+        tools.length >= 3 ? 4 : tools.length >= 1 ? 2 : 0, 4,
+        tools.length ? tools.slice(0, 6).join(", ") : "None named.",
+        tools.length < 3 ? "Name your ERP and tools explicitly - SAP, Oracle Fusion, Excel, Power BI. Keyword filters search for these by name." : ""),
+      chk("Qualification stated", hasCert ? 2 : 0, 2,
+        hasCert ? "Found." : "Not found.",
+        hasCert ? "" : "State your qualification plainly - B.Com, M.Com, MBA Finance, CA Inter. Many filters key on it.")
+    ]);
 
-    // 6. Domain vocabulary (16). Reuses the same skill list the job
-    //    matching runs on, so the number is consistent with the board.
-    var n = r.skills.length;
-    if (n >= 12) {
-      add("pass", 16, "Strong finance vocabulary", n + " recognised finance and systems terms.");
-    } else if (n >= 6) {
-      add("warn", 11, "Moderate keyword coverage",
-        n + " recognised terms. Name your ERP, your tools and your sub-domain explicitly.");
-    } else if (n >= 1) {
-      add("warn", 6, "Thin on keywords",
-        "Only " + n + " recognised term" + (n === 1 ? "" : "s") + ". Use the words the postings use — see the gaps on each job below.");
-    } else {
-      add("fail", 0, "No finance keywords recognised",
-        "Nothing matched the finance vocabulary. Either the text did not extract, or the wording is very generic.");
-    }
+    // ---- G. Language (8) ----
+    // "i.e." and "e.g." would otherwise each count as the pronoun "i",
+    // because the full stop is a word boundary - which quietly penalises
+    // a CV for punctuation it got right.
+    var prose = text.replace(/\bi\.e\./gi, " ").replace(/\be\.g\./gi, " ");
+    var pronouns = (prose.match(ATS_PRONOUN) || []).length;
+    var cliches = ATS_CLICHE.filter(function (c) { return low.indexOf(c) >= 0; });
+    var lengthOk = words >= 350 && words <= 1000;
 
-    // 7. Parseability (8). The failure mode nobody notices: a beautiful
-    //    CV that is, to software, a picture.
-    var odd = (text.match(/[|\t▪●■◆]/g) || []).length;
-    if (words < 120) {
-      add("fail", 0, "Barely any text came out",
-        "Only " + words + " words extracted. That usually means a scanned or image-based PDF, which most parsers read as empty. Export a text PDF from Word.");
-    } else if (odd > 40) {
-      add("warn", 4, "Heavy table or column formatting",
-        odd + " layout characters found. Multi-column layouts often come out scrambled — a single column is safest.");
-    } else {
-      add("pass", 8, "Text extracts cleanly", "Plain, single-column text that a parser can read straight through.");
-    }
+    group("Language", [
+      chk("No first-person pronouns",
+        pronouns === 0 ? 3 : pronouns <= 3 ? 2 : 0, 3,
+        pronouns ? pronouns + " found." : "None - correct.",
+        pronouns > 0 ? "Drop I, me and my. CV convention is implied first person: Reduced DSO, not I reduced DSO." : ""),
+      chk("No filler phrases",
+        cliches.length === 0 ? 3 : cliches.length <= 2 ? 1 : 0, 3,
+        cliches.length ? cliches.slice(0, 3).join("; ") : "None - correct.",
+        cliches.length ? "Replace these with evidence. Hard working proves nothing; Recovered INR 2 cr of ageing debt proves the same claim." : ""),
+      chk("Length",
+        lengthOk ? 2 : words >= 250 && words <= 1400 ? 1 : 0, 2,
+        words + " words.",
+        lengthOk ? "" : (words < 350
+          ? "Short for a full CV. Expand each role into concrete achievements."
+          : "Long. Past two pages the relevant parts get diluted - cut older roles back to a line each."))
+    ]);
 
-    score = Math.max(0, Math.min(100, Math.round(score)));
-    return { score: score, checks: checks, words: words };
+    var score = 0, max = 0;
+    groups.forEach(function (g) { score += g.got; max += g.max; });
+    score = Math.round(score / max * 100);
+
+    var fixes = [];
+    groups.forEach(function (g) {
+      g.checks.forEach(function (c) {
+        if (c.fix) fixes.push({ lost: c.max - c.got, label: c.label, fix: c.fix });
+      });
+    });
+    fixes.sort(function (a, b) { return b.lost - a.lost; });
+
+    return { score: score, groups: groups, fixes: fixes, words: words,
+             bullets: bullets.length, qPct: qPct, vPct: vPct };
+  }
+
+  // Bands are deliberately hard at the top. 90+ means every graded check
+  // came in at or near full marks, which a real CV almost never does on
+  // a first pass - and saying "excellent" at 78 would be the same
+  // flattery the old 100/100 was.
+  function atsBand(s) {
+    if (s >= 93) return { key: "good", word: "Exceptional",
+      say: "Rare. Almost everything a parser looks for is present and well formed." };
+    if (s >= 78) return { key: "good", word: "Strong",
+      say: "This comes through an ATS intact. The fixes below are refinements, not repairs." };
+    if (s >= 62) return { key: "mid", word: "Workable",
+      say: "It parses, but it is leaving marks on the table. The top fixes below are worth an hour." };
+    if (s >= 42) return { key: "mid", word: "Needs work",
+      say: "A parser will read this but miss or garble real parts of it." };
+    return { key: "bad", word: "At risk",
+      say: "An ATS is likely to mangle or skip this. Start with the fixes at the top." };
+  }
+
+  // A skeleton in the order a parser expects, pre-filled with what was
+  // actually detected, so it is a starting point rather than homework.
+  function atsTemplate(r, rep) {
+    var skills = r.skills.slice(0, 14).map(titleCase).join(", ")
+      || "SAP, Oracle, Advanced Excel, Reconciliation, Collections";
+    return [
+      "YOUR NAME",
+      "City, India  |  +91 XXXXX XXXXX  |  you@email.com  |  linkedin.com/in/yourname",
+      "",
+      "PROFESSIONAL SUMMARY",
+      "Accounts receivable specialist with X years across order-to-cash. Reduced DSO",
+      "by N days and recovered INR N cr in ageing debt. Strong on <your ERP>.",
+      "",
+      "SKILLS",
+      skills,
+      "",
+      "WORK EXPERIENCE",
+      "",
+      "Job Title - Company Name",
+      "Mar 2021 - Present  |  City",
+      "- Reduced DSO from 62 to 48 days across a ledger of 1,400 accounts.",
+      "- Recovered INR 3.1 cr of debt ageing beyond 90 days in four quarters.",
+      "- Automated cash application in SAP, cutting manual posting by 30%.",
+      "",
+      "Job Title - Company Name",
+      "Jun 2018 - Feb 2021  |  City",
+      "- Managed collections for 300+ B2B customers worth INR 40 cr annually.",
+      "- Resolved a backlog of 900 disputes, closing 95% within 30 days.",
+      "",
+      "EDUCATION",
+      "B.Com, University Name - 2018",
+      "",
+      "CERTIFICATIONS",
+      "Name any - CA Inter, CMA, SAP FI certification"
+    ].join("\n");
   }
 
   function paintATS() {
@@ -960,15 +1209,10 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
     if (!resume) { box.classList.remove("on"); return; }
 
     var rep = atsReport(resume);
-    var band = rep.score >= 80 ? "good" : rep.score >= 55 ? "mid" : "bad";
-    var verdict = {
-      good: "Your resume should come through an ATS intact.",
-      mid: "Readable, but parts of it will be lost or misread.",
-      bad: "An ATS is likely to mangle or skip this."
-    }[band];
+    var band = atsBand(rep.score);
+    box.className = "ats on ats-" + band.key;
 
-    box.className = "ats on ats-" + band;
-
+    // ---- headline ----
     var head = el("div", "ats-head");
     var sc = el("div", "ats-score");
     sc.appendChild(el("b", null, String(rep.score)));
@@ -976,33 +1220,109 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
     head.appendChild(sc);
 
     var meta = el("div", "ats-meta");
-    meta.appendChild(el("h3", null, "ATS readiness — " + verdict));
-    meta.appendChild(el("p", null,
-      "How machine-readable your CV is: whether the contact block, sections, dates, figures and keywords can be found and parsed."));
+    meta.appendChild(el("h3", null, "ATS readiness — " + band.word));
+    meta.appendChild(el("p", null, band.say));
     var bar = el("div", "ats-bar");
     var fill = el("i");
     fill.style.width = Math.max(3, rep.score) + "%";
-    fill.style.background = band === "good" ? "var(--good)"
-      : band === "mid" ? "var(--warn)" : "var(--crit)";
+    fill.style.background = band.key === "good" ? "var(--good)"
+      : band.key === "mid" ? "var(--warn)" : "var(--crit)";
     bar.appendChild(fill);
     meta.appendChild(bar);
     head.appendChild(meta);
     box.appendChild(head);
 
-    var list = el("ul", "ats-list");
-    rep.checks.forEach(function (c) {
-      var li = el("li", "ats-item ats-" + c.state);
-      li.appendChild(el("span", "ats-ico", c.state === "pass" ? "✓" : c.state === "warn" ? "!" : "×"));
-      var body = el("div");
-      body.appendChild(el("b", null, c.label));
-      body.appendChild(el("span", null, c.detail));
-      li.appendChild(body);
-      list.appendChild(li);
+    // ---- what to fix, worst first ----
+    if (rep.fixes.length) {
+      var fixWrap = el("div", "ats-fixes");
+      fixWrap.appendChild(el("h4", null,
+        "Fix these first — ordered by how many marks each is costing"));
+      var ol = el("ol", "ats-fixlist");
+      rep.fixes.slice(0, 6).forEach(function (f) {
+        var li = el("li");
+        li.appendChild(el("b", null, f.label));
+        li.appendChild(el("span", "ats-lost", "−" + f.lost));
+        li.appendChild(el("span", "ats-fixtext", f.fix));
+        ol.appendChild(li);
+      });
+      fixWrap.appendChild(ol);
+      box.appendChild(fixWrap);
+    } else {
+      box.appendChild(el("p", "ats-allclear",
+        "Every graded check came in at full marks. Worth a human read for tone and ordering, but there is nothing structural left to fix."));
+    }
+
+    // ---- the full scorecard ----
+    var det = document.createElement("details");
+    det.className = "ats-details";
+    var sum = document.createElement("summary");
+    sum.textContent = "Full scorecard — all " +
+      rep.groups.reduce(function (a, g) { return a + g.checks.length; }, 0) +
+      " checks";
+    det.appendChild(sum);
+
+    rep.groups.forEach(function (g) {
+      var sec = el("div", "ats-group");
+      var h = el("div", "ats-grouphead");
+      h.appendChild(el("b", null, g.name));
+      h.appendChild(el("span", null, g.got + " / " + g.max));
+      sec.appendChild(h);
+      var list = el("ul", "ats-list");
+      g.checks.forEach(function (c) {
+        var li = el("li", "ats-item ats-" + c.state);
+        li.appendChild(el("span", "ats-ico",
+          c.state === "pass" ? "✓" : c.state === "warn" ? "!" : "×"));
+        var body = el("div");
+        body.appendChild(el("b", null, c.label + " — " + c.got + "/" + c.max));
+        body.appendChild(el("span", null, c.detail));
+        if (c.fix) body.appendChild(el("span", "ats-fixtext", c.fix));
+        li.appendChild(body);
+        list.appendChild(li);
+      });
+      sec.appendChild(list);
+      det.appendChild(sec);
     });
-    box.appendChild(list);
+    box.appendChild(det);
+
+    // ---- an ATS-safe skeleton to copy ----
+    var tpl = document.createElement("details");
+    tpl.className = "ats-details";
+    var tsum = document.createElement("summary");
+    tsum.textContent = "An ATS-safe format you can copy";
+    tpl.appendChild(tsum);
+    tpl.appendChild(el("p", "ats-tplnote",
+      "Section order a parser expects, with your own detected skills filled in. "
+      + "Plain text on purpose: no tables, no columns, no text boxes, no header or "
+      + "footer, no photo. Paste it into Word, replace the placeholders, and save as PDF."));
+    var pre = el("pre", "ats-tpl", atsTemplate(resume, rep));
+    tpl.appendChild(pre);
+    var copy = el("button", "btn", "Copy this skeleton");
+    copy.addEventListener("click", function () {
+      var txt = pre.textContent;
+      function done() { copy.textContent = "Copied"; setTimeout(function () {
+        copy.textContent = "Copy this skeleton"; }, 1800); }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(txt).then(done, function () { fallback(); });
+      } else { fallback(); }
+      function fallback() {
+        // Older browsers, and any context where the clipboard API is
+        // blocked: select the text so Ctrl+C still works.
+        var rng = document.createRange();
+        rng.selectNodeContents(pre);
+        var sel = window.getSelection();
+        sel.removeAllRanges(); sel.addRange(rng);
+        copy.textContent = "Press Ctrl+C";
+      }
+      track("used/copied-template", "Copied the CV skeleton");
+    });
+    tpl.appendChild(copy);
+    box.appendChild(tpl);
 
     box.appendChild(el("p", "ats-note",
-      "Checked in your browser, against nothing but your own file. This measures structure and parseability — it is not a simulation of any particular employer's system, and no score here can promise or deny a callback."));
+      "Checked in your browser, against nothing but your own file — it is never uploaded. "
+      + "This grades structure, parseability and evidence: the things software can see. "
+      + "It is not a simulation of any particular employer's ATS, and no score here can "
+      + "promise or deny a callback."));
   }
 
   // ---------- matching ----------
