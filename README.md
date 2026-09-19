@@ -4,7 +4,7 @@ A self-updating job board for Indian accounts-receivable and finance roles.
 A bot collects postings from Naukri, LinkedIn and Workday twice a day,
 scores each one, and bakes the results into a single web page.
 
-**Live site:** _add your Pages URL here once Pages is enabled_
+**Live site:** https://zlteamworks.github.io/ar-desk/
 
 ## What the page does
 

@@ -3,8 +3,8 @@
 # ============================================================
 #  Collect -> rebuild the page -> push, which deploys it.
 #
-#  The live site is https://job-bot.pages.dev - Cloudflare Pages
-#  redeploys it on every push to main.
+#  The live site is https://zlteamworks.github.io/ar-desk/ - GitHub Pages
+#  redeploys it on every push to main, via .github/workflows/pages.yml.
 #
 #  Run it by hand:
 #      powershell -ExecutionPolicy Bypass -File "refresh_site.ps1"
@@ -23,9 +23,9 @@ $ErrorActionPreference = 'Continue'
 $root = Split-Path -Parent $MyInvocation.MyCommand.Definition
 Set-Location $root
 
-# The public link. Cloudflare Pages serves whatever is on main, so this
-# URL is fixed - every refresh replaces the page behind it.
-$SiteUrl = 'https://job-bot.pages.dev'
+# The public link. GitHub Pages serves whatever is on main, so this URL
+# is fixed - every refresh replaces the page behind it.
+$SiteUrl = 'https://zlteamworks.github.io/ar-desk/'
 
 $log = Join-Path $root 'refresh.log'
 function Say($msg) {
@@ -96,9 +96,9 @@ if ($LASTEXITCODE -ne 0) {
 Say 'page rebuilt at site\index.html'
 
 # ---- 3. Push, which is what deploys -----------------------------------
-# Cloudflare Pages watches the GitHub repo. A push to main triggers the
-# deploy; there is no build step, it just serves site/index.html. So
-# "publishing" here is nothing more than a commit and a push.
+# The pages.yml workflow runs on every push to main. There is no build
+# step - it uploads site/ and Pages serves it. So "publishing" here is
+# nothing more than a commit and a push.
 
 $git = Find-Git
 if (-not $git) {
