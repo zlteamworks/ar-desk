@@ -1,0 +1,44 @@
+# Publishes site/index.html to GitHub Pages on every push to main.
+#
+# The page is a single self-contained file - there is nothing to compile,
+# so this workflow only uploads the site/ folder and tells Pages to serve
+# it. That means refresh_site.ps1 needs no new step: it already ends in
+# "git push origin main", and that push is what deploys.
+name: Deploy site to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  # Lets you redeploy from the Actions tab without making a commit.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# The scheduled refresh runs twice a day. If two pushes land close
+# together, deploy the newer one rather than queueing both.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/configure-pages@v5
+
+      # Serving site/ as the Pages root puts the page at the bare URL,
+      # so the shared link has no /site/ segment in it.
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
