@@ -3,14 +3,16 @@
 A self-updating job board for finance careers in India, from internships
 to leadership, including accounting, banking, investment and insurance.
 A bot collects postings from Naukri, LinkedIn and Workday twice a day,
-scores each one, and bakes the results into a single web page.
+scores each one, and bakes the results into a job page. A role-based website
+backend protects that page and provides private candidate/HR workspaces.
 
-**Live site:** https://zlteamworks.github.io/ar-desk/
+**Live site:** https://talenttap.talenttap-finance-india.workers.dev/
 
 ## What the page does
 
-The published page is one self-contained HTML file — no backend, no API
-calls at view time. Everything below runs in your own browser:
+The generated job page is one self-contained HTML file and performs matching
+in the visitor's browser. For accounts and private profiles, deploy the
+website backend in [`cloudflare/`](cloudflare/); GitHub Pages cannot enforce login.
 
 - **Search** titles, companies, locations and skills as you type. Combine
   keywords with the filters below, or clear the search to browse again.
@@ -78,18 +80,21 @@ recommended next improvements.
 Validation: `python -m unittest discover -s tests -v`. The JavaScript checks
 require Node.js or the Node runtime bundled with Playwright.
 
-## What is deliberately not published
+## Publication and privacy boundaries
 
-- **Recruiter contact details.** Job posters often leave a personal email
-  or mobile number in the description. `redact_contacts()` in
-  [export_site_data.py](export_site_data.py) strips those from every
-  published field before the page is built. They are not in this repo and
-  not on the site.
+- **Recruiter contact details are explicit and source-bound.** When a job
+  poster includes an email address or Indian mobile number in the source
+  posting, the exporter validates it and publishes it only in the dedicated
+  recruiter-contact field. Titles, company names and description text remain
+  contact-redacted, and the interface shows `Not Available` rather than
+  guessing when no direct detail was supplied.
 - **LinkedIn job text.** LinkedIn rows carry title, company, location and
   a link out to the original posting, nothing more. `strip_for_publication()`
   enforces this.
-- **Login sessions, resumes and the run spreadsheet.** All excluded by
-  [.gitignore](.gitignore) and kept on the machine that runs the bot. The
+- **Login sessions, account data, resumes and the run spreadsheet.** All
+  databases and backups are excluded by [.gitignore](.gitignore). Candidate
+  contacts are visible only to approved HR accounts and only after the
+  candidate separately enables discovery and contact sharing. The
   `*.docx` / `*.pdf` rule stays even though the bot no longer reads a
   resume — a CV left in this folder should still never be committable.
 
@@ -98,11 +103,10 @@ require Node.js or the Node runtime bundled with Playwright.
 Both are **off until configured**, and the page loads no analytics script
 at all while they are.
 
-There is no sign-in on TalentTap, so there are no user accounts to count.
-What is measurable is how many people opened the link, how many were
-distinct, where they came from, and how many did something once they
-arrived — filtered, sorted, scored a resume, opened a job, or clicked
-through to apply. That last group is the "actively used it" number.
+The optional account server keeps its own audit events for registrations,
+logins, HR approval and profile changes. Public-page product analytics remain
+separate and record only aggregate use such as filtering, resume matching,
+opening a job or clicking through to apply.
 
 Counting runs through [GoatCounter](https://www.goatcounter.com): no
 cookies, no cross-site identifiers, nothing that identifies a person,
@@ -134,3 +138,41 @@ showing the latest run without anyone touching it.
 
 Requires Python 3.12+ and a logged-in browser profile for the portals that
 need one.
+
+## Protected account platform
+
+The recommended free deployment is the all-in-one TalentTap website in
+[`cloudflare/README.md`](cloudflare/README.md). Registration, login, role
+selection, profiles and candidate discovery are pages within TalentTap; users
+do not install or sign into a separate app. Cloudflare supplies only the
+server-side hosting and private D1 database.
+
+GitHub Pages serves static files and therefore cannot securely implement the
+requested account restriction. Run the application server on an HTTPS host
+with a persistent encrypted disk:
+
+```powershell
+python talenttap_server.py --init-db
+$env:TALENTTAP_SECURE_COOKIE = "0"   # local HTTP only; never production
+python talenttap_server.py --serve
+```
+
+Job-seeker accounts activate immediately. HR accounts remain pending so a
+visitor cannot self-identify as a recruiter and harvest candidate contacts.
+After checking the person's company and hiring role:
+
+```powershell
+python talenttap_server.py --approve-hr recruiter@company.com
+```
+
+Candidate profiles appear in the HR directory only when `actively looking`
+is enabled. Email and phone require a second, explicit contact-sharing
+consent. Passwords use salted PBKDF2-SHA256; session tokens are stored only as
+hashes; authenticated writes use CSRF tokens; login/registration are rate
+limited. The service creates one consistent SQLite backup per day and retains
+30 generations. An on-demand backup is `python talenttap_server.py --backup`.
+Copy the `backups/` directory to encrypted off-site storage according to your
+retention and deletion policy; repository copies are intentionally blocked.
+
+For deployment requirements and the GitHub Pages migration, see
+[DEPLOYMENT.md](DEPLOYMENT.md).

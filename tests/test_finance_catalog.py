@@ -16,6 +16,14 @@ class FinanceCoverageTests(unittest.TestCase):
         urls = bot.linkedin_search_urls(queries)
         self.assertEqual(urls[:3], [bot.linkedin_search_url(q, bot.LINKEDIN_CITIES[0], 0) for q in queries])
 
+    def test_countrywide_linkedin_and_workday_coverage_config(self):
+        import workday_source
+        self.assertEqual(bot.LINKEDIN_CITIES, ["India"])
+        self.assertIn(("Mastercard", "mastercard", "wd1", "CorporateCareers"), workday_source.TENANTS)
+        self.assertIn(("Visa", "visa", "wd5", "Visa"), workday_source.TENANTS)
+        self.assertEqual(len(workday_source.TENANTS), len(set(workday_source.TENANTS)))
+        self.assertGreaterEqual(workday_source.DETAIL_LIMIT, 300)
+
     def test_specialist_classification_and_collection_gates(self):
         cases = {
             "Finance Intern": "Accounting",
@@ -66,12 +74,21 @@ class FinanceCoverageTests(unittest.TestCase):
         self.assertNotIn("person@example.com", row["requirement_text"])
         self.assertTrue(row["jd_truncated"])
 
+    def test_public_contact_is_explicit_and_sanitized(self):
+        base = {"source": "Naukri", "description": "Send CV to hiring@example.com. Call.9940085723"}
+        row = exporter._row(dict(base, contact="hiring@example.com"), "shortlist", 0)
+        self.assertEqual(row["contact"], "hiring@example.com")
+        self.assertNotIn("hiring@example.com", row["jd"])
+        self.assertNotIn("9940085723", row["jd"])
+        row = exporter._row(dict(base, contact="-"), "shortlist", 0)
+        self.assertEqual(row["contact"], "Not Available")
+
     def test_build_reclassifies_without_mutating_input(self):
         payload = {"jobs": [{"title": "Fund Accountant", "family": "Accounting", "score": 9,
                               "salary_basis": "Est. (from experience)", "salary_band": "10-15", "sal_lo": 10, "sal_hi": 15}]}
         with tempfile.TemporaryDirectory() as tmp:
             out = Path(tmp) / "index.html"
-            build(payload, out_path=str(out))
+            build(payload, out_path=str(out), contacts_path=None)
             html = out.read_text(encoding="utf-8")
         data = json.loads(html.split('<script id="jobs-data" type="application/json">')[1].split('</script>')[0])
         self.assertEqual(data["jobs"][0]["family"], "Fund Accounting")

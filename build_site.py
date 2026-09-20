@@ -30,9 +30,53 @@ TEMPLATE = os.path.join(SCRIPT_DIR, "site_template.html")
 DATA = os.path.join(SCRIPT_DIR, "jobs.json")
 OUT_DIR = os.path.join(SCRIPT_DIR, "site")
 OUT = os.path.join(OUT_DIR, "index.html")
+CONTACTS_XLSX = os.path.join(SCRIPT_DIR, "jobs.xlsx")
 
 # The template carries this exact token where the payload belongs.
 MARKER = '"__JOBS_PAYLOAD__"'
+
+
+def _contact_key(source, title, company, location):
+    """Stable join key shared by the public payload and local workbook."""
+    def norm(value):
+        return " ".join(str(value or "").lower().split())
+    return tuple(norm(value) for value in (source, title, company, location))
+
+
+def load_posting_contacts(path=CONTACTS_XLSX):
+    """Read source-posted contacts from the local run workbook when present.
+
+    Older jobs.json files intentionally contained no contacts. This bridge
+    lets a rebuilt site use the already-collected workbook; new collections
+    publish the same field directly through export_site_data.py.
+    """
+    if not path or not os.path.exists(path):
+        return {}
+    try:
+        import openpyxl
+        from export_site_data import publish_contact
+        workbook = openpyxl.load_workbook(path, read_only=True, data_only=True)
+    except Exception:
+        return {}
+    contacts = {}
+    for sheet_name in ("Shortlist", "Near Misses"):
+        if sheet_name not in workbook.sheetnames:
+            continue
+        rows = workbook[sheet_name].iter_rows(values_only=True)
+        header = next(rows, None)
+        if not header or "Direct Contact" not in header:
+            continue
+        cols = {name: header.index(name) for name in
+                ("Portal", "Role", "Company", "Location", "Direct Contact")}
+        for row in rows:
+            value = publish_contact(row[cols["Direct Contact"]])
+            if value == "Not Available":
+                continue
+            key = _contact_key(row[cols["Portal"]], row[cols["Role"]],
+                               row[cols["Company"]], row[cols["Location"]])
+            contacts[key] = value
+    workbook.close()
+    return contacts
 
 
 def load_payload(path=DATA):
@@ -44,7 +88,7 @@ def load_payload(path=DATA):
         return json.load(f)
 
 
-def build(payload, template_path=TEMPLATE, out_path=OUT):
+def build(payload, template_path=TEMPLATE, out_path=OUT, contacts_path=CONTACTS_XLSX):
     with open(template_path, encoding="utf-8") as f:
         html = f.read()
 
@@ -54,6 +98,8 @@ def build(payload, template_path=TEMPLATE, out_path=OUT):
     # Reclassify existing public rows too; new searches populate on collection.
     # A listing score is independent of the collector owner's salary/experience.
     payload = deepcopy(payload)
+    posting_contacts = load_posting_contacts(contacts_path)
+    from export_site_data import redact_contacts
     for job in payload.get("jobs", []):
         family, basis, strength = classify_finance(job)
         if family and (basis == "title" or strength >= .3):
@@ -62,6 +108,15 @@ def build(payload, template_path=TEMPLATE, out_path=OUT):
         job["why"] = "Listing priority uses posting freshness, employer verification and reported applicant counts. It does not predict interview chances."
         if job.get("salary_basis", "").startswith(("Est.", "Not disclosed", "Unknown")):
             job.update(salary_basis="Not disclosed", salary_band="-", sal_lo=None, sal_hi=None)
+        key = _contact_key(job.get("source"), job.get("title"),
+                           job.get("company"), job.get("location"))
+        job["contact"] = posting_contacts.get(key, job.get("contact"))
+        if job.get("contact") in (None, "", "-"):
+            job["contact"] = "Not Available"
+        # Older public payloads may predate the stricter punctuation-aware
+        # phone redaction. Keep contact details in their labelled field only.
+        for field in ("title", "company", "why", "missing", "skills", "jd", "requirement_text"):
+            job[field] = redact_contacts(job.get(field, ""))
     payload["finance_catalog"] = public_catalog()
     payload.setdefault("counts", {})["by_family"] = {}
     for job in payload.get("jobs", []):

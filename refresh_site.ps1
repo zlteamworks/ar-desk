@@ -1,10 +1,10 @@
 # ============================================================
 #  AR DESK  -  unattended refresh
 # ============================================================
-#  Collect -> rebuild the page -> push, which deploys it.
+#  Collect -> rebuild the page -> deploy the protected Worker -> push source.
 #
-#  The live site is https://zlteamworks.github.io/ar-desk/ - GitHub Pages
-#  redeploys it on every push to main, via .github/workflows/pages.yml.
+#  The live site is the authenticated Cloudflare Worker. GitHub Pages serves
+#  only a redirect so the old public URL cannot bypass login.
 #
 #  Run it by hand:
 #      powershell -ExecutionPolicy Bypass -File "refresh_site.ps1"
@@ -25,7 +25,7 @@ Set-Location $root
 
 # The public link. GitHub Pages serves whatever is on main, so this URL
 # is fixed - every refresh replaces the page behind it.
-$SiteUrl = 'https://zlteamworks.github.io/ar-desk/'
+$SiteUrl = 'https://talenttap.talenttap-finance-india.workers.dev/'
 
 $log = Join-Path $root 'refresh.log'
 function Say($msg) {
@@ -95,14 +95,29 @@ if ($LASTEXITCODE -ne 0) {
 }
 Say 'page rebuilt at site\index.html'
 
-# ---- 3. Push, which is what deploys -----------------------------------
-# The pages.yml workflow runs on every push to main. There is no build
-# step - it uploads site/ and Pages serves it. So "publishing" here is
-# nothing more than a commit and a push.
+# ---- 3. Deploy the protected website ---------------------------------
+$node = Join-Path $root '.tools\node-v24.21.0-win-x64\node.exe'
+$wrangler = Join-Path $root '.tools\cloudflare-cli\node_modules\wrangler\bin\wrangler.js'
+if (-not (Test-Path $node) -or -not (Test-Path $wrangler)) {
+  Say 'Cloudflare deployment tools are missing - keeping the previous live site.'
+  exit 1
+}
+Say 'deploying protected TalentTap Worker'
+Push-Location (Join-Path $root 'cloudflare')
+& $node $wrangler deploy
+$deployExit = $LASTEXITCODE
+Pop-Location
+if ($deployExit -ne 0) {
+  Say "Cloudflare deploy failed with code $deployExit - keeping the previous live site"
+  exit 1
+}
+Say "protected website deployed - $SiteUrl"
+
+# ---- 4. Push source and update the legacy redirect --------------------
 
 $git = Find-Git
 if (-not $git) {
-  Say 'git not found - the page is rebuilt locally but NOT deployed.'
+  Say 'git not found - live Worker updated, but source was not pushed.'
   Say 'Expected it at %LOCALAPPDATA%\Programs\MinGit\cmd\git.exe'
   exit 1
 }
@@ -130,4 +145,4 @@ if ($LASTEXITCODE -ne 0) {
   Say 'expired; push once by hand to refresh it.'
   exit 1
 }
-Say "deployed - $SiteUrl updates in about a minute"
+Say "source pushed; legacy GitHub Pages URL redirects to $SiteUrl"

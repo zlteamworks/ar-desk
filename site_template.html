@@ -2,7 +2,7 @@
 <html lang="en">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>TalentTap — finance careers across India</title>
+<title>TalentTap — finance talent, connected</title>
 <meta name="description" content="Explore accounting, banking, investment, insurance and finance careers in India. Compare job requirements with evidence in your resume locally.">
 
 <!-- Arial is requested deliberately, and it is also the fastest choice:
@@ -523,6 +523,7 @@ select.set { border-color: var(--accent); color: var(--accent); font-weight: 700
   font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums;
 }
 .meta .src { font-size: 11.5px; font-weight: 700; display: inline-flex; align-items: center; gap: 5px; }
+.meta .contact-meta { color: var(--good); font-weight: 800; }
 .matchbar { margin-top: var(--s3); display: none; gap: var(--s3); align-items: center; flex-wrap: wrap; }
 .matchbar.on { display: flex; }
 .bar { width: 120px; height: 7px; border-radius: 4px; background: var(--surface-2); overflow: hidden; flex: none; }
@@ -691,14 +692,169 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
   font-family: inherit; font-size: 14px;
 }
 .more:hover { border-color: var(--accent); color: var(--ink); }
+
+/* ---------- 2026 visual system ----------
+   A compact, task-first shell: one strong hero, two audience routes and
+   card-based results. The underlying matching and filtering remain local. */
+:root {
+  --paper: #F4F7FB;
+  --surface: #FFFFFF;
+  --surface-2: #F0F4F8;
+  --ink: #132238;
+  --ink-2: #41536B;
+  --muted: #6B7B90;
+  --rule: #DCE4ED;
+  --rule-soft: #EAF0F5;
+  --accent: #0D8B7B;
+  --accent-soft: #DDF5F0;
+  --accent-2: #6557D9;
+  --accent-2-soft: #ECEAFE;
+  --good: #16845B;
+  --good-soft: #E0F4EA;
+  --warn: #B66A08;
+  --warn-soft: #FFF0D7;
+  --crit: #C44855;
+  --crit-soft: #FCE8EB;
+  --shadow: 0 18px 50px rgba(28, 45, 74, .09), 0 2px 8px rgba(28, 45, 74, .05);
+  --maxw: 1240px;
+  --radius: 16px;
+}
+body { background: linear-gradient(180deg, #F8FAFD 0, var(--paper) 520px); }
+.masthead {
+  color: #fff; border: 0; overflow: hidden; position: relative;
+  background:
+    radial-gradient(circle at 78% 18%, rgba(100, 87, 217, .55), transparent 25%),
+    radial-gradient(circle at 16% 115%, rgba(13, 178, 154, .42), transparent 38%),
+    linear-gradient(135deg, #101D36 0%, #172A4D 55%, #1D3158 100%);
+}
+.masthead::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .2;
+  background-image: linear-gradient(rgba(255,255,255,.08) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.08) 1px, transparent 1px);
+  background-size: 44px 44px; mask-image: linear-gradient(to bottom, #000, transparent 80%);
+}
+.masthead-in { display: block; padding-block: 22px 60px; position: relative; z-index: 1; }
+.topbar { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+.brand { flex-wrap: nowrap; }
+.brand h1 { font-size: 27px; letter-spacing: -.035em; color: #fff; }
+.brand h1 svg { color: #18B6A0; }
+.brand .tag { color: #9DE9DC; background: rgba(24,182,160,.14); border: 1px solid rgba(157,233,220,.2); }
+.topnav { display: flex; align-items: center; gap: 4px; margin-left: auto; }
+.topnav a { color: #DDE8FA; text-decoration: none; padding: 8px 11px; border-radius: 8px; font-size: 13px; font-weight: 600; }
+.topnav a:hover { color: #fff; background: rgba(255,255,255,.09); }
+.freshness { color: #AFC0D9; padding-left: 20px; border-left: 1px solid rgba(255,255,255,.18); }
+.freshness b { color: #fff; }
+.hero-grid { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(330px, .7fr); gap: 64px; align-items: center; padding-top: 68px; }
+.eyebrow { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 16px; color: #91EDDE; font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.eyebrow::before { content: ""; width: 24px; height: 2px; border-radius: 2px; background: #18B6A0; }
+.hero-copy h2 { max-width: 690px; color: #fff; font-size: clamp(38px, 5vw, 66px); line-height: 1.02; letter-spacing: -.055em; }
+.hero-copy h2 span { color: #8FE8D9; }
+.hero-copy p { max-width: 670px; margin: 20px 0 0; color: #C8D6E9; font-size: 17px; line-height: 1.7; }
+.hero-actions { display: flex; flex-wrap: wrap; gap: 11px; margin-top: 28px; }
+.hero-btn { display: inline-flex; align-items: center; justify-content: center; min-height: 46px; padding: 0 18px; border-radius: 10px; text-decoration: none; font-size: 14px; font-weight: 800; }
+.hero-btn.primary { color: #082E2A; background: #8FE8D9; box-shadow: 0 10px 30px rgba(24,182,160,.25); }
+.hero-btn.secondary { color: #fff; border: 1px solid rgba(255,255,255,.26); background: rgba(255,255,255,.08); }
+.audience-panel { padding: 10px; border: 1px solid rgba(255,255,255,.16); border-radius: 20px; background: rgba(255,255,255,.08); box-shadow: 0 24px 60px rgba(2,9,22,.25); backdrop-filter: blur(12px); }
+.audience-option { display: grid; grid-template-columns: 42px minmax(0,1fr) auto; gap: 12px; align-items: center; padding: 17px; color: #fff; text-decoration: none; border-radius: 13px; }
+.audience-option + .audience-option { border-top: 1px solid rgba(255,255,255,.12); }
+.audience-option:hover { background: rgba(255,255,255,.09); }
+.audience-icon { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 12px; background: rgba(143,232,217,.15); color: #8FE8D9; font-size: 20px; }
+.audience-option.hiring .audience-icon { color: #C2BAFF; background: rgba(194,186,255,.13); }
+.audience-option b { display: block; font-size: 14px; }
+.audience-option small { display: block; color: #B9C9DE; margin-top: 2px; line-height: 1.4; }
+.audience-arrow { color: #8FE8D9; font-size: 20px; }
+
+.ribbon { position: relative; z-index: 2; width: min(calc(100% - 48px), var(--maxw)); margin: -25px auto 0; border: 0; border-radius: 14px; box-shadow: var(--shadow); }
+.ribbon-in { padding: 16px 22px; }
+.srcstat .n { font-size: 19px; color: var(--ink); }
+.srcstat.total { border-left-color: var(--rule); }
+.steps { border: 0; background: transparent; }
+.steps-in { padding-top: 34px; padding-bottom: 8px; }
+.step { padding: 16px; border-radius: 12px; background: rgba(255,255,255,.56); border: 1px solid rgba(220,228,237,.8); }
+.step-n { border-radius: 9px; background: linear-gradient(135deg, var(--accent), #16A995); box-shadow: 0 7px 16px rgba(13,139,123,.2); }
+.step b { color: var(--ink); }
+
+.wrap { padding-bottom: 64px; }
+.resume { scroll-margin-top: 16px; border: 1px solid #CFE1E2; box-shadow: var(--shadow); }
+.resume:not(.has-resume) { border-color: #94D8CD; box-shadow: 0 0 0 4px rgba(13,139,123,.07), var(--shadow); }
+.resume-head { padding: 22px 24px; }
+.resume-head h2 { font-size: 19px; }
+.btn { border-radius: 9px; font-weight: 700; }
+.btn-primary, .applybtn { background: linear-gradient(135deg, var(--accent), #0A796C); box-shadow: 0 7px 16px rgba(13,139,123,.16); }
+.career-guide { border-radius: 14px; box-shadow: 0 8px 24px rgba(28,45,74,.04); }
+.fambar { margin-top: 28px; }
+.famchips { flex-wrap: nowrap; overflow-x: auto; padding: 2px 2px 8px; scrollbar-width: thin; }
+.famchip { flex: none; box-shadow: 0 2px 7px rgba(28,45,74,.03); }
+.famchip[aria-pressed="true"] { background: linear-gradient(135deg, var(--accent), #087366); box-shadow: 0 7px 18px rgba(13,139,123,.18); }
+.controls { scroll-margin-top: 0; padding: 16px; border: 1px solid var(--rule); border-radius: 14px; background: rgba(244,247,251,.94); backdrop-filter: blur(14px); box-shadow: 0 10px 24px rgba(28,45,74,.06); }
+.search-field input { height: 46px; border-radius: 10px; box-shadow: inset 0 1px 2px rgba(28,45,74,.04); }
+select { border-radius: 9px; min-height: 38px; }
+.rows { display: grid; gap: 12px; border: 0; background: transparent; box-shadow: none; overflow: visible; }
+.row { border: 1px solid var(--rule); border-radius: 15px; background: var(--surface); box-shadow: 0 6px 22px rgba(28,45,74,.045); overflow: hidden; }
+.row:last-child { border-bottom: 1px solid var(--rule); }
+.row:hover, .row.open { background: #FBFCFE; border-color: #C8D6E5; box-shadow: 0 13px 34px rgba(28,45,74,.09); }
+.stripe { border-radius: 15px 0 0 15px; }
+.jobtitle { font-size: 17px; color: var(--ink); }
+.company .via { border-radius: 999px; padding-inline: 8px; }
+.side { min-width: 124px; }
+.applybtn, .linkbtn { border-radius: 9px; }
+.contact-card { display: grid; grid-template-columns: 34px minmax(0,1fr) auto; align-items: center; gap: 12px; padding: 13px; border: 1px solid #CFE8E3; background: var(--accent-soft); border-radius: 11px; }
+.contact-card.unavailable { border-color: var(--rule); background: var(--surface-2); }
+.contact-ico { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 9px; color: var(--accent); background: var(--surface); font-weight: 800; }
+.contact-card.unavailable .contact-ico { color: var(--muted); }
+.contact-copy b { display: block; font-size: 12px; color: var(--ink); }
+.contact-copy span { display: block; color: var(--ink-2); font-size: 13px; overflow-wrap: anywhere; }
+.contact-action { color: var(--accent); font-size: 12px; font-weight: 800; text-decoration: none; white-space: nowrap; }
+
+.recruiter-connect { margin-top: 32px; padding: 28px; display: grid; grid-template-columns: minmax(0,1.4fr) minmax(280px,.6fr); gap: 30px; align-items: center; border-radius: 18px; color: #fff; background: linear-gradient(135deg, #263C6A, #5346B8); box-shadow: 0 18px 45px rgba(59,54,139,.2); }
+.recruiter-connect .eyebrow { margin-bottom: 10px; color: #BDB6FF; }
+.recruiter-connect .eyebrow::before { background: #AFA6FF; }
+.recruiter-connect h2 { font-size: 26px; letter-spacing: -.03em; }
+.recruiter-connect p { margin: 8px 0 0; color: #D9DDF2; max-width: 70ch; }
+.recruiter-points { display: grid; gap: 9px; }
+.recruiter-points span { display: flex; gap: 9px; align-items: flex-start; color: #EEF0FF; font-size: 13px; }
+.recruiter-points span::before { content: "✓"; color: #95F0D9; font-weight: 900; }
+.method { margin-top: 34px; }
+
+@media (max-width: 880px) {
+  .topnav { display: none; }
+  .hero-grid { grid-template-columns: 1fr; gap: 30px; padding-top: 48px; }
+  .audience-panel { max-width: 620px; }
+  .recruiter-connect { grid-template-columns: 1fr; }
+}
+@media (max-width: 720px) {
+  .masthead-in { padding-block: 16px 48px; }
+  .brand .tag, .freshness { display: none; }
+  .hero-grid { padding-top: 38px; }
+  .hero-copy h2 { font-size: 40px; }
+  .hero-copy p { font-size: 15px; }
+  .ribbon { width: calc(100% - 24px); margin-top: -19px; }
+  .ribbon-in { gap: 10px 18px; padding: 13px 15px; }
+  .srcstat.total { width: 100%; padding-top: 8px; border-top: 1px solid var(--rule); }
+  .steps-in { padding-top: 24px; }
+  .resume-head, .recruiter-connect { padding: 20px; }
+  .resume-actions { width: 100%; }
+  .resume-actions .btn { flex: 1; }
+  .controls { padding: 12px; }
+  .controls select { flex: 1 1 calc(50% - 8px); min-width: 0; }
+  .contact-card { grid-template-columns: 32px minmax(0,1fr); }
+  .contact-action { grid-column: 2; }
+}
+@media (prefers-color-scheme: dark) {
+  body { background: linear-gradient(180deg, #101B29 0, var(--paper) 520px); }
+  .step { background: rgba(20,32,29,.72); border-color: var(--rule); }
+  .controls { background: rgba(13,22,20,.94); }
+  .row { background: var(--surface); }
+  .row:hover, .row.open { background: var(--surface-2); border-color: var(--rule); }
+}
 </style>
 
 <script id="jobs-data" type="application/json">"__JOBS_PAYLOAD__"</script>
 
 <header class="masthead">
   <div class="masthead-in">
-    <div class="brand">
-      <h1>
+    <div class="topbar">
+      <div class="brand">
+        <h1>
         <!-- Thousands of postings narrowed to the few worth your time,
              and the drop that comes out the bottom. -->
         <svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true">
@@ -710,13 +866,41 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
           </g>
           <circle cx="16" cy="25.6" r="2.1" fill="#fff"/>
         </svg>
-        TalentTap
-      </h1>
-      <span class="tag">updated twice daily</span>
-      <p>Finance careers across India — accounting, banking, investments, risk, insurance and more, from internships to leadership. Explore the career guide and compare the available job text with evidence in <i>your</i> resume, in your own browser.</p>
+          TalentTap
+        </h1>
+        <span class="tag">updated twice daily</span>
+      </div>
+      <nav class="topnav" aria-label="Primary navigation">
+        <a href="#browse-jobs">Browse jobs</a>
+        <a href="#resume-match">Resume match</a>
+        <a href="#for-recruiters">For recruiters</a>
+      </nav>
+      <div class="freshness">
+        Last refreshed<br><b id="fresh-at">—</b>
+      </div>
     </div>
-    <div class="freshness">
-      last refresh<br><b id="fresh-at">—</b>
+    <div class="hero-grid">
+      <div class="hero-copy">
+        <span class="eyebrow">Finance careers across India</span>
+        <h2>Where finance talent and <span>opportunity connect.</span></h2>
+        <p>Discover relevant roles, compare each posting with your resume, and reach the hiring side faster with source-verified recruiter contact details when available.</p>
+        <div class="hero-actions">
+          <a class="hero-btn primary" href="#browse-jobs">Explore open roles</a>
+          <a class="hero-btn secondary" href="#resume-match">Match my resume</a>
+        </div>
+      </div>
+      <aside class="audience-panel" aria-label="Choose your path">
+        <a class="audience-option" href="#resume-match">
+          <span class="audience-icon" aria-hidden="true">↗</span>
+          <span><b>I’m looking for a role</b><small>Match your experience and contact hiring teams.</small></span>
+          <span class="audience-arrow" aria-hidden="true">→</span>
+        </a>
+        <a class="audience-option hiring" href="#for-recruiters">
+          <span class="audience-icon" aria-hidden="true">◎</span>
+          <span><b>I’m hiring finance talent</b><small>Make your opportunity easier to discover.</small></span>
+          <span class="audience-arrow" aria-hidden="true">→</span>
+        </a>
+      </aside>
     </div>
   </div>
 </header>
@@ -746,7 +930,7 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
 
 <div class="wrap">
 
-  <section class="resume">
+  <section class="resume" id="resume-match">
     <div class="resume-head">
       <div>
         <h2>Compare your resume with finance roles</h2>
@@ -791,7 +975,7 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
     <p class="screen-note">These are learning suggestions, not mandatory qualifications. Each employer sets its own requirements. Counts describe this collected dataset; some career paths may have no current listings.</p>
   </details>
 
-  <div class="controls">
+  <div class="controls" id="browse-jobs">
     <div class="job-search" role="search" aria-label="Search job listings">
       <label for="job-search">Search jobs</label>
       <div class="search-field">
@@ -830,6 +1014,11 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
       <option value="3">Last 3 days</option>
       <option value="7">Last week</option>
     </select>
+    <select id="contact" aria-label="Recruiter contact availability">
+      <option value="">Any HR contact</option>
+      <option value="available">HR contact available</option>
+      <option value="unavailable">Contact not available</option>
+    </select>
     <select id="sort" aria-label="Sort jobs">
       <option value="match">Sort: resume match</option>
       <option value="score">Sort: listing priority</option>
@@ -841,6 +1030,19 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
   </div>
 
   <div class="rows" id="rows"></div>
+
+  <section class="recruiter-connect" id="for-recruiters">
+    <div>
+      <span class="eyebrow">For hiring teams</span>
+      <h2>Help the right candidates reach you.</h2>
+      <p>TalentTap surfaces fresh finance openings and makes requirements easier to understand. Add a public recruiting email or phone number to the original job posting and it can appear here as a source-posted contact on the next refresh.</p>
+    </div>
+    <div class="recruiter-points">
+      <span>Clear requirements and salary details improve candidate decisions.</span>
+      <span>Employer-direct roles receive a visible trust signal.</span>
+      <span>Candidate resumes remain private on their own devices.</span>
+    </div>
+  </section>
 
   <section class="method">
     <div>
@@ -1552,7 +1754,7 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
   // is the number this page exists to produce - with no resume loaded it
   // falls back to odds on its own, see visible().
   var state = { family: "", source: "", city: "", salary: "", exp: "",
-                fresh: "", sort: "match", query: "", employment: "" };
+                fresh: "", sort: "match", query: "", employment: "", contact: "" };
   var searchTerms = [];
   var searchTimer;
   // Build once: the list and every facet reuse this text on each search.
@@ -1597,6 +1799,18 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
     return jhi >= want_lo && jlo <= want_hi;
   }
 
+  function hasContact(j) {
+    var value = (j.contact || "").trim().toLowerCase();
+    return !!value && value !== "-" && value !== "not available";
+  }
+
+  function contactHref(value) {
+    var email = (value || "").match(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/);
+    if (email) return "mailto:" + email[0];
+    var phone = (value || "").match(/(?:\+?91[-\s]?)?[6-9]\d{9}/);
+    return phone ? "tel:" + phone[0].replace(/\s|-/g, "") : "";
+  }
+
   // One predicate for both the list and the facet counts. `skip` leaves
   // one filter out, which is what a facet needs: the Accounting chip has
   // to say how many Accounting roles you would get IF you clicked it,
@@ -1612,6 +1826,8 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
     if (skip !== "exp" && !inRange(j.exp_lo, j.exp_hi, state.exp)) return false;
     if (skip !== "fresh" && state.fresh && (j.days_old == null || j.days_old > +state.fresh)) return false;
     if (skip !== "employment" && state.employment && (j.type || "").indexOf(state.employment) !== 0) return false;
+    if (skip !== "contact" && state.contact === "available" && !hasContact(j)) return false;
+    if (skip !== "contact" && state.contact === "unavailable" && hasContact(j)) return false;
     return true;
   }
 
@@ -1677,7 +1893,7 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
       list.length === 1 ? " role" : " roles"));
     paintCounts(list.length);
     document.getElementById("reset").hidden = !(state.family || state.source ||
-      state.city || state.salary || state.exp || state.fresh || state.query || state.employment);
+      state.city || state.salary || state.exp || state.fresh || state.query || state.employment || state.contact);
 
     if (!list.length) {
       var e = el("div", "empty");
@@ -1743,6 +1959,7 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
         ? j.salary_band + " LPA · " + j.salary_basis
         : j.salary_basis || "CTC not shown"));
       if (j.applicants != null) meta.appendChild(el("span", null, j.applicants === 0 ? "be an early applicant" : j.applicants + " applicants"));
+      if (hasContact(j)) meta.appendChild(el("span", "contact-meta", "HR contact available"));
       main.appendChild(meta);
       if (j.type) meta.appendChild(el("span", null, j.type));
 
@@ -1820,11 +2037,14 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
         track("used/clicked-apply", "Clicked through to a posting");
       });
       side.appendChild(apply);
-      var pl = el("a", "linkbtn", "Find people");
-      pl.href = peopleLink(j.company, j.family);
+      var contactLink = contactHref(j.contact);
+      var pl = el("a", "linkbtn", contactLink ? "Contact HR" : "Find recruiter");
+      pl.href = contactLink || peopleLink(j.company, j.family);
       pl.target = "_blank";
       pl.rel = "noopener noreferrer";
-      pl.title = "Open LinkedIn people search for " + j.company + " — your own connections there show first";
+      pl.title = contactLink
+        ? "Use the recruiter contact published in the original job posting"
+        : "Open LinkedIn people search for " + j.company + " — your own connections there show first";
       side.appendChild(pl);
       row.appendChild(side);
 
@@ -1861,12 +2081,23 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
       }
       ex.appendChild(b3);
 
-      if (j.contact && j.contact !== "-") {
-        var b4 = el("div", "block");
-        b4.appendChild(el("h4", null, "Contact left in the posting"));
-        b4.appendChild(el("p", null, j.contact));
-        ex.appendChild(b4);
+      var b4 = el("div", "block");
+      b4.appendChild(el("h4", null, "HR / recruiter contact"));
+      var available = hasContact(j);
+      var contactCard = el("div", "contact-card" + (available ? "" : " unavailable"));
+      contactCard.appendChild(el("span", "contact-ico", available ? "@" : "—"));
+      var contactCopy = el("div", "contact-copy");
+      contactCopy.appendChild(el("b", null, available ? "Published in the source job post" : "Not Available"));
+      contactCopy.appendChild(el("span", null, available ? j.contact : "No direct recruiter contact was found in this posting."));
+      contactCard.appendChild(contactCopy);
+      var directHref = contactHref(j.contact);
+      if (directHref) {
+        var direct = el("a", "contact-action", directHref.indexOf("mailto:") === 0 ? "Send email →" : "Call now →");
+        direct.href = directHref;
+        contactCard.appendChild(direct);
       }
+      b4.appendChild(contactCard);
+      ex.appendChild(b4);
 
       row.appendChild(ex);
       host.appendChild(row);
@@ -1935,7 +2166,7 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
     var totBox = document.getElementById("ribbon-total");
     if (totBox) {
       var filtered = !!(state.family || state.source || state.city ||
-                        state.salary || state.exp || state.fresh || state.query || state.employment);
+                        state.salary || state.exp || state.fresh || state.query || state.employment || state.contact);
       totBox.querySelector(".n").textContent = total;
       totBox.querySelector(".l").textContent = filtered ? "matching" : "finance roles";
     }
@@ -1958,6 +2189,9 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
     paintSelect("employment", "employment", function (j, v) { return (j.type || "").indexOf(v) === 0; });
     paintSelect("fresh", "fresh", function (j, v) {
       return j.days_old != null && j.days_old <= +v;
+    });
+    paintSelect("contact", "contact", function (j, v) {
+      return v === "available" ? hasContact(j) : !hasContact(j);
     });
   }
 
@@ -2172,7 +2406,7 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
     applySearch();
     searchInput.focus();
   });
-  ["city", "source", "salary", "exp", "fresh", "employment"].forEach(function (id) {
+  ["city", "source", "salary", "exp", "fresh", "employment", "contact"].forEach(function (id) {
     document.getElementById(id).addEventListener("change", function (e) {
       state[id] = e.target.value;
       // Highlight a dropdown that is actually narrowing the list, so it
@@ -2193,8 +2427,8 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
     searchTerms = [];
     clearSearch.hidden = true;
     state.family = state.source = state.city = "";
-    state.salary = state.exp = state.fresh = state.employment = "";
-    ["city", "source", "salary", "exp", "fresh", "employment"].forEach(function (id) {
+    state.salary = state.exp = state.fresh = state.employment = state.contact = "";
+    ["city", "source", "salary", "exp", "fresh", "employment", "contact"].forEach(function (id) {
       var sel = document.getElementById(id);
       sel.value = "";
       sel.classList.remove("set");

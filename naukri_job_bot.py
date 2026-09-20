@@ -134,7 +134,7 @@ NAUKRI_RESULTS_PER_PAGE = 100
 # LinkedIn's guest API returns 10 cards per call (NOT 25 - stepping `start`
 # by 25 silently skips 15 jobs every page).
 LINKEDIN_PAGE_SIZE = 10
-LINKEDIN_PAGES = 15          # x 10 results
+LINKEDIN_PAGES = 25          # x 10 results; country-wide search keeps call volume bounded
 # Push the salary / recency / experience cuts onto Naukri's own search
 # facets instead of downloading everything and filtering here. Measured: it
 # turns "12 of 41 disclosed CTCs in band" into "27 of 27". Set False only if
@@ -150,8 +150,8 @@ LINKEDIN_PACE_SECONDS = 1.0  # gap between bursts; LinkedIn throttles bursts,
 # Hard wall-clock caps. LinkedIn's guest API will happily 429 forever, and
 # chasing the last few pages once tripled a 90s run. Naukri is the primary
 # source for Indian AR roles; LinkedIn is a bonus, so it gets a budget.
-LINKEDIN_SEARCH_BUDGET_S = 180
-LINKEDIN_DETAIL_BUDGET_S = 180
+LINKEDIN_SEARCH_BUDGET_S = 360
+LINKEDIN_DETAIL_BUDGET_S = 240
 DETAIL_CONCURRENCY = 6       # Naukri detail fetches
 LINKEDIN_DETAIL_CONCURRENCY = 2   # LinkedIn 429s above this and we lose the
                                   # applicant counts entirely
@@ -166,7 +166,7 @@ ENRICH_SHORTLIST = True
 ENRICH_LIMIT = 4000
 # Naukri and Workday detail fetches are cheap and reliable; LinkedIn's are
 # neither, so it keeps a separate, smaller ceiling and its own time budget.
-LINKEDIN_ENRICH_LIMIT = 400
+LINKEDIN_ENRICH_LIMIT = 800
 
 # --- Browser -----------------------------------------------------------
 SHOW_BROWSER = False        # True once if a portal starts asking for CAPTCHA
@@ -222,14 +222,15 @@ HIDDEN_QUERIES = [
 ]
 INCLUDE_HIDDEN_SEARCHES = True
 
-# LinkedIn gets a subset. 20 queries x 10 cities x 5 pages is 1,000 guest
-# calls at 2 concurrent - it would spend the whole budget and still serve
-# a fraction. Naukri is the primary source for Indian finance roles.
+# LinkedIn gets one broad query per finance family. Searching India once is
+# both wider and dramatically cheaper than repeating the same query for five
+# cities: the city loop previously consumed the time budget on shallow,
+# overlapping result sets and left most deeper pages unserved.
 LINKEDIN_QUERIES = [
     "accounts receivable", "accounts payable", "general ledger",
     "financial analyst", "accountant", "internal audit", "finance manager",
 ]
-LINKEDIN_CITIES = ["Bengaluru", "Chennai", "Hyderabad", "Mumbai", "Pune"]
+LINKEDIN_CITIES = ["India"]
 
 # --- Interview-odds weights (relative) --------------------------------
 # Relative, not out of 100 - interview_score() divides by their sum. There

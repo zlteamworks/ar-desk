@@ -1,10 +1,7 @@
-# Publishes site/index.html to GitHub Pages on every push to main.
-#
-# The page is a single self-contained file - there is nothing to compile,
-# so this workflow only uploads the site/ folder and tells Pages to serve
-# it. That means refresh_site.ps1 needs no new step: it already ends in
-# "git push origin main", and that push is what deploys.
-name: Deploy site to GitHub Pages
+# The former public URL now contains only a redirect to the authenticated
+# Cloudflare website. Never publish site/index.html here: doing so would bypass
+# TalentTap's account restriction.
+name: Redirect legacy GitHub Pages URL
 
 on:
   push:
@@ -39,11 +36,9 @@ jobs:
         with:
           enablement: true
 
-      # Serving site/ as the Pages root puts the page at the bare URL,
-      # so the shared link has no /site/ segment in it.
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: site
+          path: legacy-site
 
       - id: deployment
         uses: actions/deploy-pages@v4

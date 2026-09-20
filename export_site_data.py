@@ -29,10 +29,10 @@ descriptions on a public site is the thing that actually draws a
 complaint; linking to them is what every job aggregator already does.
 strip_for_publication() enforces that, so it cannot be forgotten.
 
-Recruiter emails and phone numbers never ship, from any field.
-redact_contacts() enforces that for the same reason: the page is public,
-and those details belong to individuals who never agreed to appear on it.
-jobs.xlsx keeps them locally for the owner's own outreach.
+Recruiter emails and phone numbers are published only through the dedicated
+contact field when they were explicitly included in the source job posting.
+They remain redacted from titles, company names and description text so a
+contact is never exposed accidentally or without the UI's source label.
 """
 
 import json
@@ -108,7 +108,7 @@ _EMAIL_RE = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
 # Indian mobile numbers: 10 digits opening 6-9, with an optional +91. The
 # lookarounds keep it off salary figures and long ID strings. Written to
 # match the pattern the bot itself extracts in extract_contact().
-_PHONE_RE = re.compile(r"(?<![\d.])(?:\+?91[-\s]?)?[6-9]\d{9}(?![\d.])")
+_PHONE_RE = re.compile(r"(?<!\d)(?:\+?91[-\s]?)?[6-9]\d{9}(?!\d)")
 
 
 def redact_contacts(text):
@@ -118,6 +118,21 @@ def redact_contacts(text):
     text = _EMAIL_RE.sub("[email removed]", str(text))
     text = _PHONE_RE.sub("[phone removed]", text)
     return text
+
+
+def publish_contact(text):
+    """Return only email/Indian-mobile tokens explicitly found in a posting.
+
+    The extractor already stores this compact value on the private job row.
+    Re-validating it here prevents surrounding JD text or arbitrary markup
+    from leaking into the public contact field.
+    """
+    if not text or str(text).strip() in ("", "-"):
+        return "Not Available"
+    raw = str(text)
+    emails = list(dict.fromkeys(_EMAIL_RE.findall(raw)))
+    phones = list(dict.fromkeys(_PHONE_RE.findall(raw)))
+    return " | ".join((emails + phones)[:2]) or "Not Available"
 
 
 def strip_for_publication(job):
@@ -245,10 +260,9 @@ def _row(job, tier, index):
         # The page subtracts the visitor's own uploaded resume from this,
         # in their browser - so there is no owner_resume_match to publish.
         "missing": redact_contacts(_clean(job.get("missing"))),
-        # Never published - see redact_contacts(). "-" is the value the
-        # page already treats as "no contact", so the detail panel's
-        # "Contact left in the posting" block simply does not render.
-        "contact": "-",
+        # This is intentionally separate from the redacted JD. The UI labels
+        # it as source-posted contact information and never guesses a person.
+        "contact": publish_contact(job.get("contact")),
         "url": job.get("url", ""),
         "skills": redact_contacts(_clean(job.get("skills"))[:400]),
         # Empty for link-only sources - see strip_for_publication().

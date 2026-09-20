@@ -45,7 +45,6 @@ import ssl
 import time
 import urllib.error
 import urllib.request
-from finance_catalog import SPECIALISMS
 from concurrent.futures import ThreadPoolExecutor
 
 # ============================ CONFIG ============================
@@ -102,27 +101,53 @@ TENANTS = [
     # Valid slug, and note it is lowercase - "ExternalCareerSite" answers
     # with zero rows, which looks identical to a healthy but quiet tenant.
     ("HP",              "hp",               "wd5", "externalcareersite"),
+
+    # Additional India-active employers, verified from live Workday job URLs.
+    # Coverage grows by employers here, not by guessing tenants: there is no
+    # global Workday index and the host/site names are not derivable.
+    ("Mastercard",      "mastercard",       "wd1", "CorporateCareers"),
+    ("Visa",            "visa",             "wd5", "Visa"),
+    ("BlackRock",       "blackrock",        "wd1", "BlackRock_Professional"),
+    ("Haleon",          "gsknch",           "wd3", "GSKCareers"),
+    ("PHINIA",          "phinia",           "wd5", "PHINIA_Careers"),
+    ("HPE",             "hpe",              "wd5", "WFMathpe"),
+    ("RTX",             "globalhr",         "wd5", "REC_RTX_Ext_Gateway"),
+    ("ServiceTitan",    "servicetitan",     "wd1", "ServiceTitan"),
+    ("SiFive",          "sifive",           "wd1", "sifivecareers"),
+    ("Kaplan",          "ghc",              "wd1", "Kaplan_Careers"),
+    ("Sabre",           "sabre",            "wd1", "SabreJobs"),
 ]
 
 # Workday's own relevance search is good, so a handful of broad stems beats
 # a long list of near-duplicate titles - same reasoning as the Naukri queries.
 WORKDAY_QUERIES = [
+    "finance",
+    "accounting",
     "accounts receivable",
     "order to cash",
-    "collections",
-    "credit control",
-    "billing analyst",
-    "accounting", "accounts payable", "audit", "tax", "treasury", "payroll",
-    "financial planning", "finance intern", "finance director",
+    "accounts payable",
+    "audit",
+    "tax",
+    "treasury",
+    "payroll",
+    "financial analyst",
+    "risk",
+    "banking",
+    "investment",
+    "actuarial",
+    "insurance",
+    "compliance",
+    "credit",
 ]
-WORKDAY_QUERIES = list(dict.fromkeys(WORKDAY_QUERIES + [row[3] for row in SPECIALISMS]))
 
 RESULTS_PER_PAGE = 20      # Workday's default page size
-MAX_PAGES = 2              # 40 rows per query per employer is plenty
-CONCURRENCY = 8            # these are small JSON calls to many hosts
+MAX_PAGES = 2              # specialised searches rarely need more than 40
+DEEP_PAGES = 5             # broad finance/accounting searches can be larger
+DEEP_QUERIES = {"finance", "accounting"}
+CONCURRENCY = 12           # small independent JSON calls across many hosts
 TIMEOUT_S = 20
 DETAIL_CONCURRENCY = 6
-DETAIL_LIMIT = 80          # cap full-JD fetches so a run can't blow out
+DETAIL_LIMIT = 300         # enough text for matching across the larger tenant set
 
 UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
       "AppleWebKit/537.36 (KHTML, like Gecko) "
@@ -314,7 +339,7 @@ def fetch_workday(queries=None, max_days_old=None, verbose=True):
     tasks = [(name, tenant, host, site, q, pg)
              for (name, tenant, host, site) in TENANTS
              for q in queries
-             for pg in range(MAX_PAGES)]
+             for pg in range(DEEP_PAGES if q.lower() in DEEP_QUERIES else MAX_PAGES)]
 
     if verbose:
         print(f"[Workday]  {len(TENANTS)} employers x {len(queries)} queries "

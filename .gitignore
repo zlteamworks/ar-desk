@@ -21,6 +21,20 @@ jobs_*.xlsx
 ~$*.xlsx
 refresh.log
 
+# Account database and privacy-sensitive backups. Production copies belong on
+# an encrypted persistent volume, never in the deployment repository.
+data/
+backups/
+*.sqlite3
+*.sqlite3-wal
+*.sqlite3-shm
+
+# Cloudflare local state and package dependencies
+cloudflare/.wrangler/
+cloudflare/.dev.vars
+cloudflare/node_modules/
+.tools/
+
 # Python noise
 __pycache__/
 *.pyc
