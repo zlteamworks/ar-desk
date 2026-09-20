@@ -406,6 +406,18 @@ textarea {
   padding-block: var(--s3);
   border-bottom: 1px solid var(--rule-soft);
 }
+.job-search { flex: 1 0 100%; min-width: 0; }
+.job-search label { display: block; font-size: 13px; font-weight: 700; margin-bottom: var(--s1); }
+.search-field { display: flex; gap: var(--s2); align-items: center; }
+.search-field input {
+  flex: 1; min-width: 0; width: 100%; height: 42px;
+  font: inherit; padding: 9px 12px;
+  border: 1px solid var(--rule); border-radius: 6px;
+  background: var(--surface); color: var(--ink);
+}
+.search-field input::placeholder { color: var(--muted); }
+.search-field input:focus { border-color: var(--accent); }
+.search-hint { margin: var(--s1) 0 0; font-size: 12px; color: var(--muted); }
 .seg { display: flex; border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; background: var(--surface); }
 .seg button {
   border: 0; background: transparent; color: var(--ink-2); cursor: pointer;
@@ -757,6 +769,14 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
   </div>
 
   <div class="controls">
+    <div class="job-search" role="search" aria-label="Search job listings">
+      <label for="job-search">Search jobs</label>
+      <div class="search-field">
+        <input id="job-search" type="search" placeholder="e.g. Accounts Receivable, Accenture, SAP" aria-describedby="search-hint" aria-controls="rows" autocomplete="off">
+        <button class="btn" id="clear-search" type="button" hidden>Clear search</button>
+      </div>
+      <p class="search-hint" id="search-hint">Search titles, companies, locations and skills. Results update as you type.</p>
+    </div>
     <select id="city"><option value="">All cities</option></select>
     <select id="source"><option value="">All sources</option></select>
     <select id="salary">
@@ -787,7 +807,7 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
     </select>
     <button class="btn" id="reset" hidden>Clear filters</button>
     <div class="spacer"></div>
-    <span class="count" id="count">—</span>
+    <span class="count" id="count" role="status" aria-live="polite" aria-atomic="true">—</span>
   </div>
 
   <div class="rows" id="rows"></div>
@@ -1540,7 +1560,14 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
   // is the number this page exists to produce - with no resume loaded it
   // falls back to odds on its own, see visible().
   var state = { family: "", source: "", city: "", salary: "", exp: "",
-                fresh: "", sort: "match" };
+                fresh: "", sort: "match", query: "" };
+  var searchTerms = [];
+  var searchTimer;
+  // Build once: the list and every facet reuse this text on each search.
+  JOBS.forEach(function (j) {
+    j._searchText = [j.title, j.company, j.location, (j.cities || []).join(" "),
+      j.family, j.skills].filter(Boolean).join(" ").toLowerCase().replace(/\s+/g, " ");
+  });
   var PAGE = 150;        // rows drawn at once
   var shown = PAGE;      // grows via the show-more button
 
@@ -1585,6 +1612,7 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
   // facet's own filter to its own count makes every unselected chip read
   // zero the moment you pick one, which tells you nothing.
   function passes(j, skip) {
+    if (!searchTerms.every(function (term) { return j._searchText.indexOf(term) >= 0; })) return false;
     if (skip !== "family" && state.family && (j.family || "Finance") !== state.family) return false;
     if (skip !== "source" && state.source && j.source !== state.source) return false;
     if (skip !== "city" && state.city && (j.cities || []).indexOf(state.city) < 0) return false;
@@ -1656,12 +1684,12 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
       list.length === 1 ? " role" : " roles"));
     paintCounts(list.length);
     document.getElementById("reset").hidden = !(state.family || state.source ||
-      state.city || state.salary || state.exp || state.fresh);
+      state.city || state.salary || state.exp || state.fresh || state.query);
 
     if (!list.length) {
       var e = el("div", "empty");
-      e.appendChild(el("h3", null, "Nothing matches those filters"));
-      e.appendChild(el("p", null, "Widen the source or city filter, or switch to Everything to include near-miss roles."));
+      e.appendChild(el("h3", null, state.query ? "No jobs match your search" : "Nothing matches those filters"));
+      e.appendChild(el("p", null, "Try fewer keywords, widen your filters, or use Clear filters to see all roles."));
       host.appendChild(e);
       return;
     }
@@ -1904,7 +1932,7 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
     var totBox = document.getElementById("ribbon-total");
     if (totBox) {
       var filtered = !!(state.family || state.source || state.city ||
-                        state.salary || state.exp || state.fresh);
+                        state.salary || state.exp || state.fresh || state.query);
       totBox.querySelector(".n").textContent = total;
       totBox.querySelector(".l").textContent = filtered ? "matching" : "finance roles";
     }
@@ -2056,6 +2084,30 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
     var v = e.target.value;
     pasteTimer = setTimeout(function () { if (v.trim().length > 60) setResume("pasted resume", v); }, 500);
   });
+  var searchInput = document.getElementById("job-search");
+  var clearSearch = document.getElementById("clear-search");
+  function applySearch() {
+    clearTimeout(searchTimer);
+    state.query = searchInput.value.toLowerCase().trim().replace(/\s+/g, " ");
+    searchTerms = state.query ? state.query.split(" ") : [];
+    clearSearch.hidden = !searchInput.value;
+    if (state.query) track("used/filtered", "Applied a filter");
+    rerender();
+  }
+  searchInput.addEventListener("input", function () {
+    clearTimeout(searchTimer);
+    clearSearch.hidden = !searchInput.value;
+    searchTimer = setTimeout(applySearch, 180);
+  });
+  searchInput.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") { e.preventDefault(); applySearch(); }
+    if (e.key === "Escape") { e.preventDefault(); searchInput.value = ""; applySearch(); }
+  });
+  clearSearch.addEventListener("click", function () {
+    searchInput.value = "";
+    applySearch();
+    searchInput.focus();
+  });
   ["city", "source", "salary", "exp", "fresh"].forEach(function (id) {
     document.getElementById(id).addEventListener("change", function (e) {
       state[id] = e.target.value;
@@ -2072,6 +2124,10 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
     rerender();
   });
   document.getElementById("reset").addEventListener("click", function () {
+    clearTimeout(searchTimer);
+    searchInput.value = state.query = "";
+    searchTerms = [];
+    clearSearch.hidden = true;
     state.family = state.source = state.city = "";
     state.salary = state.exp = state.fresh = "";
     ["city", "source", "salary", "exp", "fresh"].forEach(function (id) {

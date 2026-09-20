@@ -11,6 +11,8 @@ scores each one, and bakes the results into a single web page.
 The published page is one self-contained HTML file — no backend, no API
 calls at view time. Everything below runs in your own browser:
 
+- **Search** titles, companies, locations and skills as you type. Combine
+  keywords with the filters below, or clear the search to browse again.
 - **Filter** by job family (AR, Credit & Collections, AP, Payroll, Tax,
   Audit, Treasury, FP&A, R2R, Accounting), city, salary band, experience
   and how recently the job was posted.
