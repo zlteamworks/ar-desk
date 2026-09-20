@@ -1,11 +1,12 @@
 """
 JOB BOT  -  India finance jobs from Naukri + LinkedIn + Workday
 ===============================================================
-Setup once:   pip install playwright openpyxl pdfplumber python-docx
+Setup once:   pip install playwright openpyxl
               playwright install
 Then run:     python naukri_job_bot.py
 
-Resume in / Excel out both live in THIS script's folder.
+The Excel file is written into THIS script's folder. No resume is read
+here - see "SCORING IS RESUME-FREE" below.
 
 WHAT THIS BUILD IS FOR
 ----------------------
@@ -30,8 +31,22 @@ machinery survives because the OWNER's spreadsheet still uses it:
   * INTERVIEW_MIN_SCORE now only splits the Excel file's two sheets.
                       It has no effect on what the website shows.
 
-The interview-odds model is unchanged and still scores every row. On the
-site it is the secondary number, behind each visitor's resume match.
+The interview-odds model still scores every row. On the site it is the
+secondary number, behind each visitor's resume match.
+
+SCORING IS RESUME-FREE
+----------------------
+What gets collected is decided entirely by the keyword stems in
+PRIMARY_QUERIES / HIDDEN_QUERIES / LINKEDIN_QUERIES - a resume has never
+had a say in that. The published SCORE used to be a different story: it
+carried a 12% "does the owner's CV cover this JD" term, and the Missing
+Skills column meant "asked for, but absent from the owner's CV". Both
+were meaningless to every visitor except one person, so both are gone.
+
+Interview odds are now directness, freshness, competition, family fit and
+experience band only, and Missing Skills lists everything the posting
+asks for. Resume matching happens in one place and one place only: the
+visitor's own upload, scored in their own browser, on their own machine.
 
 WHY IT IS ~30x FASTER THAN THE OLD BUILD
 ----------------------------------------
@@ -80,15 +95,17 @@ SALARY_TOLERANCE_LPA = 1.0
 KEEP_UNDISCLOSED_SALARY = True
 
 # --- You ---------------------------------------------------------------
+# The only personal input left. It sets the experience band the odds
+# model scores against; no resume is read anywhere in this script.
 MY_EXPERIENCE_YEARS = 5
-RESUME_PATH = "Jeevanandam_R_Senior AR.docx"
 
 # --- Where ------------------------------------------------------------
 # Every metro that does meaningful finance hiring in India. The page lets
 # a visitor filter down to the one they care about, so collecting broadly
 # here costs run time but never costs them relevance.
 LOCATIONS = ["Bengaluru", "Chennai", "Hyderabad", "Mumbai", "Pune",
-             "Delhi", "Gurgaon", "Noida", "Kolkata", "Coimbatore"]
+             "Delhi", "Gurgaon", "Noida", "Kolkata", "Coimbatore",
+             "Ahmedabad", "Jaipur", "Kochi", "Chandigarh", "Indore"]
 LOCATION_STRICT = True
 
 # --- How fresh (hard gate) --------------------------------------------
@@ -100,11 +117,11 @@ MAX_DAYS_OLD = 7
 # for the owner. It does NOT decide what reaches the website any more -
 # the site publishes everything and lets the visitor sort by their own
 # resume match, which is the whole point of the filters on the page.
-INTERVIEW_MIN_SCORE = 62
+INTERVIEW_MIN_SCORE = 0
 # Minimum family-content signal (0-100) for a job whose TITLE doesn't name
 # its family. A long JD mentioning "invoice" once scores ~33, which is why
 # a low bar lets unrelated roles through - see finance_gate().
-MIN_FAMILY_PERCENT = 55
+MIN_FAMILY_PERCENT = 30
 # Postings from "Confidential" / unnamed employers almost never convert.
 REQUIRE_NAMED_COMPANY = True
 # Drop postings whose JD is too thin to tell what the job actually is.
@@ -112,12 +129,12 @@ MIN_DESCRIPTION_CHARS = 120
 
 # --- Coverage vs speed -------------------------------------------------
 SOURCES = ["naukri", "linkedin", "workday"]
-NAUKRI_PAGES = 3            # x 100 results = up to 300 per query per city
+NAUKRI_PAGES = 15            # x 100 results = up to 300 per query per city
 NAUKRI_RESULTS_PER_PAGE = 100
 # LinkedIn's guest API returns 10 cards per call (NOT 25 - stepping `start`
 # by 25 silently skips 15 jobs every page).
 LINKEDIN_PAGE_SIZE = 10
-LINKEDIN_PAGES = 5          # x 10 results
+LINKEDIN_PAGES = 15          # x 10 results
 # Push the salary / recency / experience cuts onto Naukri's own search
 # facets instead of downloading everything and filtering here. Measured: it
 # turns "12 of 41 disclosed CTCs in band" into "27 of 27". Set False only if
@@ -215,12 +232,14 @@ LINKEDIN_QUERIES = [
 LINKEDIN_CITIES = ["Bengaluru", "Chennai", "Hyderabad", "Mumbai", "Pune"]
 
 # --- Interview-odds weights (relative) --------------------------------
+# Relative, not out of 100 - interview_score() divides by their sum. There
+# is deliberately no resume term: the score is published to strangers, so
+# every part of it has to mean something to a stranger.
 W_DIRECTNESS = 26   # named direct employer, not an agency mass-repost
 W_FRESHNESS = 22   # posted hours/days ago = recruiter is actively screening
-W_COMPETITION = 16   # few applicants = your CV actually gets read
-W_AR_FIT = 16   # it really is an AR role
-W_RESUME = 12   # your resume covers what they ask for
-W_EXPERIENCE = 8    # you sit inside their band, not above/below it
+W_COMPETITION = 16   # few applicants = a CV actually gets read
+W_AR_FIT = 16   # the keyword stems really did land on a finance role
+W_EXPERIENCE = 8    # MY_EXPERIENCE_YEARS sits inside their band
 
 # ======================= nothing to edit below =======================
 
@@ -269,121 +288,11 @@ AR_TERMS = [
 # title: terms that, in the TITLE, settle the family on their own.
 # body:  supporting terms, used only when no title term matched, and then
 #        only if they are dense enough to clear MIN_FAMILY_PERCENT.
-JOB_FAMILIES = [
-    ("Accounts Receivable", [
-        "accounts receivable", "receivable", "order to cash", "order-to-cash",
-        "o2c", "invoice to cash", "cash application", "cash applications",
-        "billing", "dunning", "ar analyst", "ar executive",
-    ], AR_TERMS),
+from finance_catalog import JOB_FAMILIES, SKILL_VOCAB, ADDITIONAL_QUERIES, SPECIALISMS, classify_finance
 
-    ("Credit & Collections", [
-        "collection", "collections", "credit control", "credit analyst",
-        "credit risk", "credit manager", "recovery",
-    ], [
-        "collections", "credit control", "credit limit", "credit review",
-        "dso", "days sales outstanding", "past due", "overdue", "dunning",
-        "credit risk", "bad debt", "recovery", "delinquency",
-    ]),
-
-    ("Accounts Payable", [
-        "accounts payable", "procure to pay", "procure-to-pay", "p2p",
-        "ap analyst", "ap executive", "invoice processing", "vendor payment",
-        "accounts payable executive",
-    ], [
-        "accounts payable", "vendor invoice", "vendor payment", "three way match",
-        "3 way match", "purchase order", "po matching", "grn", "invoice booking",
-        "vendor reconciliation", "payment run", "expense reimbursement",
-        "travel and expense", "t&e", "procure to pay",
-    ]),
-
-    ("Payroll", [
-        "payroll", "compensation and benefits", "salary processing",
-    ], [
-        "payroll", "salary processing", "pf", "esi", "gratuity",
-        "form 16", "payroll reconciliation", "attendance", "full and final",
-    ]),
-
-    ("Tax", [
-        "tax", "taxation", "gst", "transfer pricing", "indirect tax",
-        "direct tax", "tax analyst", "tax manager",
-    ], [
-        "gst", "tds", "income tax", "indirect tax", "direct tax",
-        "transfer pricing", "tax return", "tax audit", "vat", "withholding",
-        "statutory compliance", "tax provision", "deferred tax",
-    ]),
-
-    ("Audit & Compliance", [
-        "audit", "internal audit", "statutory audit", "compliance",
-        "sox", "risk and control", "internal control",
-    ], [
-        "internal audit", "statutory audit", "sox", "internal controls",
-        "audit report", "control testing", "risk assessment", "compliance",
-        "walkthrough", "audit findings", "icfr",
-    ]),
-
-    ("Treasury", [
-        "treasury", "cash management", "forex", "fx ", "liquidity",
-    ], [
-        "treasury", "cash flow forecast", "liquidity", "forex", "hedging",
-        "bank guarantee", "letter of credit", "investment", "borrowings",
-        "cash management", "fund flow",
-    ]),
-
-    ("FP&A", [
-        "fp&a", "financial planning", "budgeting", "business finance",
-        "financial analyst", "planning and analysis", "cost accountant",
-        "costing",
-    ], [
-        "budgeting", "forecasting", "variance analysis", "financial modelling",
-        "financial modeling", "mis", "management reporting", "cost analysis",
-        "profitability", "ebitda", "business partnering", "scenario analysis",
-    ]),
-
-    ("General Ledger / R2R", [
-        "general ledger", "record to report", "r2r", "gl accountant",
-        "financial reporting", "month end", "reconciliation", "controller",
-        "statutory reporting",
-    ], [
-        "general ledger", "journal entries", "month-end close", "month end close",
-        "record to report", "balance sheet reconciliation", "account reconciliation",
-        "trial balance", "accruals", "prepaid", "fixed assets", "intercompany",
-        "us gaap", "ifrs", "consolidation", "financial statements",
-    ]),
-
-    ("Accounting", [
-        "accountant", "accounts", "accounting", "bookkeep", "finance executive",
-        "finance associate", "finance officer", "accounts assistant",
-        "finance manager", "finance",
-    ], [
-        "bookkeeping", "tally", "vouchers", "ledger", "petty cash",
-        "bank reconciliation", "invoice", "accounting", "book keeping",
-        "day to day accounting", "quickbooks", "zoho books",
-    ]),
-]
-
-# A row that matches no family at all is not a finance job, whatever the
-# search returned. This is the only content gate left.
 FAMILY_NAMES = [name for name, _, _ in JOB_FAMILIES]
-
-SKILL_VOCAB = [
-    "SAP", "SAP FSCM", "SAP S/4HANA", "SAP FI", "Oracle", "Oracle Fusion",
-    "Oracle R12", "PeopleSoft", "NetSuite", "Microsoft Dynamics", "Tally",
-    "QuickBooks", "Workday", "HighRadius", "BlackLine", "Esker", "Billtrust",
-    "GetPaid", "Cforia", "Advanced Excel", "Power BI", "Power Query", "SQL",
-    "VBA", "Macros", "Tableau",
-    "Accounts Receivable", "Order to Cash", "O2C", "Cash Application",
-    "Cash Allocation", "Cash Posting", "Collections", "Credit Control",
-    "Credit Analysis", "Credit Risk Assessment", "Dispute Management",
-    "Deductions Management", "Chargebacks", "AR Ageing", "AR Aging",
-    "DSO Analysis", "Dunning", "Billing", "Invoicing", "E-Invoicing",
-    "Bad Debt Provisioning", "Bank Reconciliation", "Account Reconciliation",
-    "Customer Master Data", "Remittance Processing", "Lockbox",
-    "Unapplied Cash", "Month-End Close", "Revenue Recognition",
-    "Intercompany Reconciliation",
-    "US GAAP", "IFRS", "SOX", "Internal Controls", "Journal Entries",
-    "GL Reconciliation",
-    "CA", "CMA", "CPA", "MBA Finance", "ACCA", "M.Com", "B.Com", "CA Inter",
-]
+PRIMARY_QUERIES = list(dict.fromkeys(PRIMARY_QUERIES + ADDITIONAL_QUERIES))
+LINKEDIN_QUERIES = list(dict.fromkeys(LINKEDIN_QUERIES + [row[3] for row in SPECIALISMS]))
 
 CONSULTANCY_WORDS = [
     "consultanc", "consultant", "consulting", "staffing", "recruit",
@@ -508,39 +417,6 @@ def clean(text):
 
 def slugify(text):
     return re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
-
-
-# ------------------------- resume -------------------------
-
-def read_resume_text(path):
-    if not path:
-        return ""
-    full = resolve(path)
-    try:
-        low = full.lower()
-        if low.endswith(".pdf"):
-            import pdfplumber
-            with pdfplumber.open(full) as pdf:
-                return "\n".join(p.extract_text() or "" for p in pdf.pages)
-        if low.endswith(".docx"):
-            import docx
-            return "\n".join(p.text for p in docx.Document(full).paragraphs)
-        with open(full, encoding="utf-8", errors="ignore") as f:
-            return f.read()
-    except FileNotFoundError:
-        print(f"  ! Resume not found at:\n      {full}")
-        print("    -> Put it beside this script and set RESUME_PATH exactly.")
-        return ""
-    except Exception as e:
-        print(f"  ! Could not read resume ({e}) - continuing without it.")
-        return ""
-
-
-def build_keywords(resume_text):
-    kw = set(tokenize(resume_text))
-    for q in PRIMARY_QUERIES:
-        kw |= set(tokenize(q))
-    return kw
 
 
 # ------------------------- salary -------------------------
@@ -760,23 +636,7 @@ def classify_family(job):
     on a two-line Naukri stub IS an AP job, and letting a thin description
     drag its strength down would push it under the gate for no good reason.
     """
-    title = (job.get("title") or "").lower()
-    hay = " ".join([job.get("title") or "", job.get("skills") or "",
-                    job.get("description") or ""]).lower()
-
-    for name, title_terms, body_terms in JOB_FAMILIES:
-        for t in title_terms:
-            if re.search(r"(?<![a-z])" + re.escape(t), title):
-                return name, "title", max(0.6, _family_body_strength(hay, body_terms))
-
-    best, best_strength = None, 0.0
-    for name, _title_terms, body_terms in JOB_FAMILIES:
-        s = _family_body_strength(hay, body_terms)
-        if s > best_strength:
-            best, best_strength = name, s
-    if best is None or best_strength <= 0:
-        return None, None, 0.0
-    return best, "body", best_strength
+    return classify_finance(job)
 
 
 def finance_gate(job):
@@ -792,6 +652,15 @@ def finance_gate(job):
     """
     title = (job.get("title") or "").lower()
 
+    family, basis, strength = classify_family(job)
+    # Finance systems and finance sales are intentional career tracks.
+    # Only explicit specialist title matches can bypass adjacent-role gates.
+    if basis == "title" and family in {
+        "Finance Systems & Transformation", "Insurance", "Banking & Lending",
+        "Asset & Wealth Management", "Quantitative Finance", "Investment Operations",
+    } and not any(t in title for t in ("recruiter", "talent acquisition", "software engineer", "developer")):
+        return True, family, strength, f"{family} by specialist title"
+
     for term in HARD_BLOCK_TITLE_TERMS:
         if term in title:
             return False, None, 0.0, f"different job family ({term.strip()})"
@@ -801,7 +670,6 @@ def finance_gate(job):
     if erp and any(t in title for t in ERP_ROLE_TERMS):
         return False, None, 0.0, f"ERP implementation role ({erp.upper()})"
 
-    family, basis, strength = classify_family(job)
     pct = strength * 100
 
     for term in SOFT_BLOCK_TITLE_TERMS:
@@ -830,7 +698,7 @@ def detect_employment_type(*texts):
     hay = " ".join(t for t in texts if t).lower()
     if not hay.strip():
         return "Full-time (assumed)"
-    if "intern" in hay:
+    if re.search(r"\b(intern|internship|internships)\b", hay):
         return "Internship"
     if "part-time" in hay or "part time" in hay:
         return "Part-time"
@@ -1411,16 +1279,19 @@ def normalize_linkedin(card):
     }
 
 
-def fetch_linkedin(page, queries):
-    # Deliberately NOT every query x every city. LinkedIn's guest API is
-    # rate-limited by burst, so a request list it cannot possibly serve
-    # just means the budget expires on page 1 of everything instead of
-    # covering the queries that matter.
+def linkedin_search_urls(queries):
+    # Cover every career area before spending the time budget on deeper
+    # pages of the first few AR searches.
     urls = []
-    for q in queries:
+    for pg in range(LINKEDIN_PAGES):
         for loc in LINKEDIN_CITIES:
-            for pg in range(LINKEDIN_PAGES):
+            for q in queries:
                 urls.append(linkedin_search_url(q, loc, pg * LINKEDIN_PAGE_SIZE))
+    return urls
+
+
+def fetch_linkedin(page, queries):
+    urls = linkedin_search_urls(queries)
 
     print(f"[LinkedIn] {len(urls)} guest-API calls, "
           f"{LINKEDIN_CONCURRENCY} at a time...")
@@ -1544,19 +1415,6 @@ def score_family(job):
     return float(job.get("_family_strength") or 0.0)
 
 
-def score_resume(job, resume_keywords):
-    fields = [(job["title"], 3.0), (job["skills"], 2.0),
-              (job["description"], 1.0)]
-    total = matched = 0.0
-    for text, w in fields:
-        toks = set(tokenize(text))
-        if not toks:
-            continue
-        total += w * len(toks)
-        matched += w * len(toks & resume_keywords)
-    return (matched / total) if total else 0.0
-
-
 def score_freshness(job):
     d = job["days_old"]
     if d is None:
@@ -1636,34 +1494,38 @@ def score_experience(job):
     return 0.15
 
 
-def missing_skills(job, resume_keywords):
+def asked_for_skills(job):
+    """
+    Every SKILL_VOCAB term the posting actually names.
+
+    This used to subtract the owner's resume and return the remainder,
+    which made the published column a private diff nobody else could
+    read. It is now just the posting's own ask - the page subtracts each
+    visitor's uploaded resume from it in their browser, so the same
+    string serves everyone.
+    """
     hay = " ".join([job["title"], job["skills"], job["description"]]).lower()
     if not hay.strip():
         return "-"
-    missing = []
+    asked = []
     for term in SKILL_VOCAB:
         pattern = r"(?<![a-z0-9])" + re.escape(term.lower()) + r"(?![a-z0-9])"
-        if re.search(pattern, hay):
-            toks = tokenize(term)
-            if toks and not all(t in resume_keywords for t in toks):
-                if term not in missing:
-                    missing.append(term)
-    return ", ".join(missing) if missing else "None - strong match"
+        if re.search(pattern, hay) and term not in asked:
+            asked.append(term)
+    return ", ".join(asked) if asked else "-"
 
 
-def interview_score(job, resume_keywords, salary_penalty):
+def interview_score(job, salary_penalty):
     ar = score_family(job)
-    resume = score_resume(job, resume_keywords)
     fresh = score_freshness(job)
     comp = score_competition(job)
     direct = score_directness(job)
     exp = score_experience(job)
 
     total = (direct * W_DIRECTNESS + fresh * W_FRESHNESS +
-             comp * W_COMPETITION + ar * W_AR_FIT +
-             resume * W_RESUME + exp * W_EXPERIENCE)
+             comp * W_COMPETITION + ar * W_AR_FIT + exp * W_EXPERIENCE)
     weight_sum = (W_DIRECTNESS + W_FRESHNESS + W_COMPETITION +
-                  W_AR_FIT + W_RESUME + W_EXPERIENCE)
+                  W_AR_FIT + W_EXPERIENCE)
     score = max(0, round(total / weight_sum * 100) - salary_penalty)
 
     reasons = []
@@ -1691,21 +1553,18 @@ def interview_score(job, resume_keywords, salary_penalty):
         reasons.append(f"{fam}-leaning role")
     if exp >= 1.0:
         reasons.append("exp band matches exactly")
-    if resume >= 0.6:
-        reasons.append("resume covers the JD")
 
     return {
         "score": score,
         "verdict": verdict_for(score),
         "family": job.get("_family") or "Finance",
         "ar": round(ar * 100),
-        "resume": round(resume * 100),
         "fresh": round(fresh * 100),
         "comp": round(comp * 100),
         "direct": round(direct * 100),
         "exp_fit": round(exp * 100),
         "why": "; ".join(reasons),
-        "missing": missing_skills(job, resume_keywords),
+        "missing": asked_for_skills(job),
         "posted_date": posting_date_str(job["days_old"]),
         "age": age_str(job["days_old"]),
         "contact": extract_contact(job.get("description", "")),
@@ -1758,11 +1617,11 @@ def jd_signature(job):
 
 HEADERS = ["#", "Odds", "Verdict", "Portal", "Role", "Company", "Posted By",
            "Posted", "Age", "Location", "Experience", "Salary (LPA)",
-           "Salary Basis", "Applicants", "Type", "Resume Match %", "Fit %",
-           "Why it can convert", "Missing Skills to Address",
+           "Salary Basis", "Applicants", "Type", "Fit %",
+           "Why it can convert", "Skills the Posting Asks For",
            "Direct Contact", "Apply Link", "Family"]
 
-WIDTHS = [5, 7, 15, 9, 34, 26, 11, 12, 11, 16, 12, 13, 20, 11, 16, 9, 7,
+WIDTHS = [5, 7, 15, 9, 34, 26, 11, 12, 11, 16, 12, 13, 20, 11, 16, 7,
           46, 40, 24, 10, 22]
 
 
@@ -1800,7 +1659,6 @@ def write_sheet(ws, jobs, title):
             job["salary_basis"],
             appl,
             job.get("employment_type") or "-",
-            job["resume"],
             job["ar"],
             job["why"],
             job["missing"],
@@ -1820,14 +1678,12 @@ def write_sheet(ws, jobs, title):
         if n is not None:
             _fill(ws, r, 14, "C6EFCE" if n <= 25 else
                   "FFEB9C" if n <= 100 else "FFC7CE")
-        m = job["resume"]
-        _fill(ws, r, 16, "C6EFCE" if m >= 70 else "FFEB9C" if m >= 50 else "FFC7CE")
         a = job["ar"]
-        _fill(ws, r, 17, "C6EFCE" if a >= 60 else "FFEB9C" if a >= 40 else "FFC7CE")
+        _fill(ws, r, 16, "C6EFCE" if a >= 60 else "FFEB9C" if a >= 40 else "FFC7CE")
         if job["contact"] != "-":
-            _fill(ws, r, 20, "C6EFCE")
+            _fill(ws, r, 19, "C6EFCE")
 
-        link = ws.cell(row=r, column=21)
+        link = ws.cell(row=r, column=20)
         if job["url"]:
             link.hyperlink = job["url"]
             link.value = "Open"
@@ -1928,10 +1784,10 @@ def main():
     print(f"  excel  : split at odds >= {INTERVIEW_MIN_SCORE}; "
           f"the website publishes everything\n")
 
-    print("Reading resume...")
-    resume_text = read_resume_text(RESUME_PATH)
-    keywords = build_keywords(resume_text)
-    print(f"  {len(keywords)} keywords.\n")
+    n_queries = len(PRIMARY_QUERIES) + (
+        len(HIDDEN_QUERIES) if INCLUDE_HIDDEN_SEARCHES else 0)
+    print(f"  search : {n_queries} keyword stems x {len(LOCATIONS)} cities "
+          f"(no resume is read - matching happens in the visitor's browser)\n")
 
     from playwright.sync_api import sync_playwright
     wanted = wanted_location_tokens()
@@ -2046,7 +1902,7 @@ def main():
             continue
         job["salary_band"] = band
         job["salary_basis"] = basis
-        job.update(interview_score(job, keywords, penalty))
+        job.update(interview_score(job, penalty))
         scored.append(job)
 
     scored.sort(key=lambda j: (j["score"], j["direct"], j["fresh"], j["comp"]),

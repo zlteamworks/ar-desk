@@ -45,6 +45,7 @@ import ssl
 import time
 import urllib.error
 import urllib.request
+from finance_catalog import SPECIALISMS
 from concurrent.futures import ThreadPoolExecutor
 
 # ============================ CONFIG ============================
@@ -111,7 +112,10 @@ WORKDAY_QUERIES = [
     "collections",
     "credit control",
     "billing analyst",
+    "accounting", "accounts payable", "audit", "tax", "treasury", "payroll",
+    "financial planning", "finance intern", "finance director",
 ]
+WORKDAY_QUERIES = list(dict.fromkeys(WORKDAY_QUERIES + [row[3] for row in SPECIALISMS]))
 
 RESULTS_PER_PAGE = 20      # Workday's default page size
 MAX_PAGES = 2              # 40 rows per query per employer is plenty

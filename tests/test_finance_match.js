@@ -1,0 +1,37 @@
+const fs = require("fs");
+const assert = require("assert");
+require("../finance_match.js");
+const catalog = JSON.parse(fs.readFileSync(0, "utf8"));
+const matcher = FinanceMatch.create(catalog);
+const skills = text => matcher.skillsIn(text, true);
+assert(skills("Order-to-cash and financial modeling; PowerBI").includes("order to cash"));
+assert(skills("Order-to-cash and financial modeling; PowerBI").includes("financial modelling"));
+assert(skills("PowerBI").includes("power bi"));
+assert(!skills("No experience with SAP. SQL reporting.").includes("sap"));
+assert(!skills("Not proficient in SQL; SAP: no experience").includes("sql"));
+assert(!skills("Not proficient in SQL; SAP: no experience").includes("sap"));
+assert(!skills("CA Inter, pursuing CFA Level 1").includes("ca"));
+assert(!skills("CA Inter, pursuing CFA Level 1").includes("cfa"));
+assert(skills("CA Inter").includes("ca inter"));
+assert(!skills("Excel").includes("advanced excel"));
+assert(!matcher.skillsIn("CA Inter required", false).includes("ca"));
+function assess(jd, resume = "Experienced finance analyst with Excel and SQL.") {
+  return matcher.assess({ jd, has_text: true, jd_truncated: false }, resume);
+}
+let report = assess("SAP is mandatory. Power BI preferred. SQL required.");
+assert.deepEqual(report.requiredGaps.map(c => c.absent).flat(), ["sap"]);
+assert(report.checks.some(c => c.kind === "preferred" && c.absent.includes("power bi")));
+assert(report.checks.some(c => c.kind === "required" && c.present.includes("sql")));
+assert.equal(assess("SAP or Oracle required.").requiredGaps.length, 0);
+assert.equal(assess("SAP is not required.").checks.length, 0);
+assert.equal(assess("SAP required and SQL preferred.").checks[0].kind, "verify");
+assert.equal(assess("Required skills:\nSAP\nPreferred skills:\nSQL").requiredGaps.length, 1);
+assert.equal(assess("Required skills:\nSAP\nResponsibilities:\nPower BI reporting").checks.length, 1);
+report = assess("CA Inter required.", "CA Inter, accountant with tax and audit experience.");
+assert.equal(report.requiredGaps.length, 0);
+assert.equal(matcher.assess({ has_text: false }, "SAP").limited, true);
+report = assess("Must work night shift. Notice period: 30 days. A degree is required.");
+assert(report.manual.some(s => s.startsWith("Shift")));
+assert(report.manual.some(s => s.startsWith("Joining")));
+assert(report.manual.some(s => s.startsWith("Qualification")));
+console.log("PASS: aliases, qualification levels, negation, required/preferred/alternative clauses, section headings, incomplete text, manual checks.");

@@ -1,5 +1,9 @@
-<title>TalentTap — finance jobs across India</title>
-<meta name="description" content="Live accounts receivable and finance roles across India, scored against your own resume in your browser.">
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TalentTap — finance careers across India</title>
+<meta name="description" content="Explore accounting, banking, investment, insurance and finance careers in India. Compare job requirements with evidence in your resume locally.">
 
 <!-- Arial is requested deliberately, and it is also the fastest choice:
      it is already installed everywhere, so there are no font files to
@@ -418,6 +422,17 @@ textarea {
 .search-field input::placeholder { color: var(--muted); }
 .search-field input:focus { border-color: var(--accent); }
 .search-hint { margin: var(--s1) 0 0; font-size: 12px; color: var(--muted); }
+.career-guide { margin-top: var(--s5); padding: var(--s4); border: 1px solid var(--rule); border-radius: var(--radius); background: var(--surface); }
+.career-guide summary { cursor: pointer; font-weight: 700; }
+.career-guide select { max-width: 100%; margin-block: var(--s3); }
+.career-guide p, .screening p { margin: var(--s2) 0; }
+.screening { margin-top: var(--s3); border-top: 1px solid var(--rule); padding-top: var(--s3); }
+.screening h4 { margin: var(--s2) 0; }
+.screen-item { padding: var(--s3); border-left: 3px solid var(--warn); background: var(--surface-2); margin-top: var(--s2); overflow-wrap: anywhere; }
+.screen-item.required { border-color: var(--crit); }
+.screen-item.preferred { border-color: var(--accent); }
+.screen-item blockquote { margin: var(--s2) 0; color: var(--ink-2); font-size: 12px; }
+.screen-note { color: var(--muted); font-size: 12px; }
 .seg { display: flex; border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; background: var(--surface); }
 .seg button {
   border: 0; background: transparent; color: var(--ink-2); cursor: pointer;
@@ -698,7 +713,7 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
         TalentTap
       </h1>
       <span class="tag">updated twice daily</span>
-      <p>Live finance and accounting roles across India — receivables, payables, ledger, audit, tax, treasury, payroll and FP&amp;A. Add your resume and every job is scored 0–100 against <i>your</i> profile, in your own browser.</p>
+      <p>Finance careers across India — accounting, banking, investments, risk, insurance and more, from internships to leadership. Explore the career guide and compare the available job text with evidence in <i>your</i> resume, in your own browser.</p>
     </div>
     <div class="freshness">
       last refresh<br><b id="fresh-at">—</b>
@@ -734,8 +749,8 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
   <section class="resume">
     <div class="resume-head">
       <div>
-        <h2>Score your resume — and check it against an ATS</h2>
-        <p>Reads your CV in this browser and does two things: rates how well software can parse it, and matches it to every job below — the skills you already have, and the ones each posting asks for that your resume never mentions.</p>
+        <h2>Compare your resume with finance roles</h2>
+        <p>Check your resume's text structure and compare its evidence with job postings. Review explicit requirements, preferred skills and conditions to confirm before applying. Your resume stays in this browser.</p>
       </div>
       <div class="resume-actions">
         <button class="btn btn-primary" id="open-dz">Add my resume</button>
@@ -768,6 +783,14 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
     <div class="famchips" id="fam-chips"></div>
   </div>
 
+  <details class="career-guide" id="career-guide">
+    <summary>Explore finance career paths and typical skills</summary>
+    <label for="career-family">Choose a career area</label><br>
+    <select id="career-family"></select>
+    <div id="career-content" aria-live="polite"></div>
+    <p class="screen-note">These are learning suggestions, not mandatory qualifications. Each employer sets its own requirements. Counts describe this collected dataset; some career paths may have no current listings.</p>
+  </details>
+
   <div class="controls">
     <div class="job-search" role="search" aria-label="Search job listings">
       <label for="job-search">Search jobs</label>
@@ -777,9 +800,9 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
       </div>
       <p class="search-hint" id="search-hint">Search titles, companies, locations and skills. Results update as you type.</p>
     </div>
-    <select id="city"><option value="">All cities</option></select>
-    <select id="source"><option value="">All sources</option></select>
-    <select id="salary">
+    <select id="city" aria-label="City"><option value="">All cities</option></select>
+    <select id="source" aria-label="Job source"><option value="">All sources</option></select>
+    <select id="salary" aria-label="Salary band">
       <option value="">Any salary</option>
       <option value="0-5">Up to 5 LPA</option>
       <option value="5-10">5 – 10 LPA</option>
@@ -787,22 +810,29 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
       <option value="15-25">15 – 25 LPA</option>
       <option value="25-99">25 LPA +</option>
     </select>
-    <select id="exp">
+    <select id="exp" aria-label="Years of experience">
       <option value="">Any experience</option>
       <option value="0-2">0 – 2 yrs</option>
       <option value="2-5">2 – 5 yrs</option>
       <option value="5-10">5 – 10 yrs</option>
       <option value="10-40">10 yrs +</option>
     </select>
-    <select id="fresh">
+    <select id="employment" aria-label="Employment type">
+      <option value="">Any employment type</option>
+      <option value="Internship">Internship</option>
+      <option value="Full-time">Full-time</option>
+      <option value="Contract">Contract</option>
+      <option value="Part-time">Part-time</option>
+    </select>
+    <select id="fresh" aria-label="Posting age">
       <option value="">Any time</option>
       <option value="1">Today &amp; yesterday</option>
       <option value="3">Last 3 days</option>
       <option value="7">Last week</option>
     </select>
-    <select id="sort">
+    <select id="sort" aria-label="Sort jobs">
       <option value="match">Sort: resume match</option>
-      <option value="score">Sort: interview odds</option>
+      <option value="score">Sort: listing priority</option>
       <option value="fresh">Sort: newest first</option>
     </select>
     <button class="btn" id="reset" hidden>Clear filters</button>
@@ -814,8 +844,8 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
 
   <section class="method">
     <div>
-      <h3>How the odds are scored</h3>
-      <p>A weighted heuristic, not a prediction. It favours roles where a real employer is actively screening right now — those convert. It is honest about what it cannot see: undisclosed salary is marked as estimated, never implied to be in band.</p>
+      <h3>How listing priority works</h3>
+      <p>Listing priority is a sorting aid based on employer verification, posting freshness and reported applicant counts. It is not an interview probability. Your age, salary and experience do not change it. Resume match measures detected text overlap, not capability or eligibility. Unpublished salary stays unknown.</p>
     </div>
     <div>
       <h3>Weighting</h3>
@@ -828,7 +858,7 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
   </section>
 
   <footer>
-    <p><b>Salary bands</b> are marked <i>Stated</i> when the employer published a range and <i>Est.</i> when it was inferred from the experience band. Always verify CTC before investing time in an application.</p>
+    <p><b>Before applying:</b> verify salary, relevant experience, credentials, work location, shifts and joining date with the employer. A missing resume term is an evidence gap, not proof you lack a skill or will be rejected.</p>
     <p id="foot-note"></p>
   </footer>
 </div>
@@ -836,6 +866,7 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.12.3/mammoth.browser.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
+<script>/*__FINANCE_MATCH__*/</script>
 <script>
 (function () {
   "use strict";
@@ -889,39 +920,8 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
 
   // Multi-word skills are matched as phrases, which is what an ATS actually
   // does — "cash application" is a skill, "cash" and "application" are not.
-  var SKILLS = ["accounts receivable","order to cash","o2c","invoice to cash","cash application","cash applications",
-    "cash allocation","cash posting","collections","credit control","credit management","credit risk","dunning",
-    "dso","days sales outstanding","ar ageing","ar aging","aging","ageing","dispute management","disputes","deductions",
-    "chargebacks","short payment","remittance","billing","invoicing","e-invoicing","customer master","bad debt",
-    "provision for doubtful","write-off","unapplied cash","lockbox","debtors","reconciliation","bank reconciliation",
-    "account reconciliation","intercompany","month-end close","month end close","revenue recognition","unbilled revenue",
-    "revenue assurance","project billing","milestone billing","time and material","pass-through","sponsor reconciliation",
-    "accounts payable","general ledger","journal entries","gl reconciliation","fixed assets","variance analysis",
-    "forecasting","working capital","cash flow","audit","internal controls","sox","us gaap","ifrs","statutory reporting",
-    "sap","sap fscm","sap fi","s/4hana","oracle","oracle fusion","oracle financials","oracle r12","peoplesoft","netsuite",
-    "microsoft dynamics","dynamics 365","tally","quickbooks","workday","highradius","blackline","esker","billtrust",
-    "getpaid","coupa","concur","alteryx","advanced excel","excel","power bi","power query","vba","macros","sql","tableau",
-    "python","erp","automation","rpa","shared services","gbs","bpo","stakeholder management","process improvement",
-    "six sigma","lean","kpi","dashboard","reporting","ca","cma","cpa","mba finance","acca","m.com","b.com","ca inter",
-    // Added when the site stopped being AR-only. Without these, a payroll
-    // or tax CV matched almost nothing and scored near zero against a job
-    // it was actually perfect for - the match number has to know the
-    // vocabulary of every family the page now lists.
-    "procure to pay","p2p","three way match","3 way match","purchase order","po matching","grn",
-    "vendor reconciliation","vendor master","invoice booking","payment run","expense reimbursement",
-    "travel and expense","t&e","ap automation","duplicate payment",
-    "gst","tds","income tax","indirect tax","direct tax","transfer pricing","tax return","tax audit",
-    "tax provision","deferred tax","withholding tax","vat","gst returns","gstr","form 16","e-way bill",
-    "payroll","payroll processing","salary processing","pf","esi","gratuity","full and final",
-    "payroll reconciliation","compensation","benefits administration","attendance","statutory compliance",
-    "treasury","cash management","liquidity","hedging","forex","fx","letter of credit","bank guarantee",
-    "fund flow","cash flow forecasting","investments","borrowings","debt management",
-    "fp&a","budgeting","financial planning","financial modelling","financial modeling","mis","mis reporting",
-    "management reporting","profitability analysis","ebitda","business partnering","scenario analysis",
-    "cost accounting","costing","standard costing","inventory valuation","margin analysis",
-    "internal audit","statutory audit","risk assessment","control testing","icfr","walkthrough",
-    "trial balance","accruals","prepaid","amortisation","depreciation","consolidation","financial statements",
-    "balance sheet","p&l","cash book","petty cash","vouchers","ledger scrutiny","zoho books","xero","busy"];
+  var CATALOG = DATA.finance_catalog;
+  var financeMatcher = FinanceMatch.create(CATALOG);
 
   function norm(s) { return (s || "").toLowerCase().replace(/\s+/g, " "); }
 
@@ -934,15 +934,7 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
     return out;
   }
 
-  function skillsIn(text) {
-    var low = norm(text), found = [];
-    for (var i = 0; i < SKILLS.length; i++) {
-      var s = SKILLS[i];
-      var re = new RegExp("(^|[^a-z0-9])" + s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "([^a-z0-9]|$)");
-      if (re.test(low)) found.push(s);
-    }
-    return found;
-  }
+  function skillsIn(text) { return financeMatcher.skillsIn(text, true); }
 
   function titleCase(s) { return s.replace(/\b[a-z]/g, function (c) { return c.toUpperCase(); }); }
 
@@ -1275,13 +1267,13 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
     if (s >= 93) return { key: "good", word: "Exceptional",
       say: "Rare. Almost everything a parser looks for is present and well formed." };
     if (s >= 78) return { key: "good", word: "Strong",
-      say: "This comes through an ATS intact. The fixes below are refinements, not repairs." };
+      say: "Strong text structure and evidence in this checklist. Employer screening may differ." };
     if (s >= 62) return { key: "mid", word: "Workable",
-      say: "It parses, but it is leaving marks on the table. The top fixes below are worth an hour." };
+      say: "Some useful evidence is present. Review the suggested improvements below." };
     if (s >= 42) return { key: "mid", word: "Needs work",
-      say: "A parser will read this but miss or garble real parts of it." };
+      say: "Some structure or evidence checks need attention; inspect the extracted text." };
     return { key: "bad", word: "At risk",
-      say: "An ATS is likely to mangle or skip this. Start with the fixes at the top." };
+      say: "Several text-evidence checks need attention. This does not predict an ATS outcome." };
   }
 
   // A skeleton in the order a parser expects, pre-filled with what was
@@ -1338,7 +1330,7 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
     head.appendChild(sc);
 
     var meta = el("div", "ats-meta");
-    meta.appendChild(el("h3", null, "ATS readiness — " + band.word));
+    meta.appendChild(el("h3", null, "Resume evidence checklist — " + band.word));
     meta.appendChild(el("p", null, band.say));
     var bar = el("div", "ats-bar");
     var fill = el("i");
@@ -1406,7 +1398,7 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
     var tpl = document.createElement("details");
     tpl.className = "ats-details";
     var tsum = document.createElement("summary");
-    tsum.textContent = "An ATS-safe format you can copy";
+    tsum.textContent = "A plain-text resume structure you can copy";
     tpl.appendChild(tsum);
     tpl.appendChild(el("p", "ats-tplnote",
       "Section order a parser expects, with your own detected skills filled in. "
@@ -1461,8 +1453,8 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
     if (job._m && job._mv === resumeVersion) return job._m;
     if (!job._js) {
       var jobText = [job.title, job.skills, job.jd].filter(Boolean).join(" . ");
-      job._js = skillsIn(jobText);
-      job._ts = skillsIn(job.title);
+      job._js = financeMatcher.skillsIn(jobText, false);
+      job._ts = financeMatcher.skillsIn(job.title, false);
     }
     var jobSkills = job._js;
     var titleSkills = job._ts;
@@ -1560,7 +1552,7 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
   // is the number this page exists to produce - with no resume loaded it
   // falls back to odds on its own, see visible().
   var state = { family: "", source: "", city: "", salary: "", exp: "",
-                fresh: "", sort: "match", query: "" };
+                fresh: "", sort: "match", query: "", employment: "" };
   var searchTerms = [];
   var searchTimer;
   // Build once: the list and every facet reuse this text on each search.
@@ -1619,6 +1611,7 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
     if (skip !== "salary" && !inRange(j.sal_lo, j.sal_hi, state.salary)) return false;
     if (skip !== "exp" && !inRange(j.exp_lo, j.exp_hi, state.exp)) return false;
     if (skip !== "fresh" && state.fresh && (j.days_old == null || j.days_old > +state.fresh)) return false;
+    if (skip !== "employment" && state.employment && (j.type || "").indexOf(state.employment) !== 0) return false;
     return true;
   }
 
@@ -1684,7 +1677,7 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
       list.length === 1 ? " role" : " roles"));
     paintCounts(list.length);
     document.getElementById("reset").hidden = !(state.family || state.source ||
-      state.city || state.salary || state.exp || state.fresh || state.query);
+      state.city || state.salary || state.exp || state.fresh || state.query || state.employment);
 
     if (!list.length) {
       var e = el("div", "empty");
@@ -1711,10 +1704,10 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
         ring.appendChild(el("b", null, j._m.pct));
         sc.appendChild(ring);
         sc.appendChild(el("div", "score-l", "match"));
-        sc.appendChild(el("div", "score-sub", "odds " + j.score));
+        sc.appendChild(el("div", "score-sub", "priority " + j.score));
       } else {
         sc.appendChild(el("div", "score", j.score));
-        sc.appendChild(el("div", "score-l", "odds"));
+        sc.appendChild(el("div", "score-l", "priority"));
         sc.appendChild(el("div", "score-sub", "add resume"));
       }
       row.appendChild(sc);
@@ -1751,6 +1744,7 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
         : j.salary_basis || "CTC not shown"));
       if (j.applicants != null) meta.appendChild(el("span", null, j.applicants === 0 ? "be an early applicant" : j.applicants + " applicants"));
       main.appendChild(meta);
+      if (j.type) meta.appendChild(el("span", null, j.type));
 
       if (j._m) {
         var mb = el("div", "matchbar on");
@@ -1761,9 +1755,17 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
         mb.appendChild(bar);
         mb.appendChild(el("span", "matchnum", j._m.pct + "%"));
         mb.appendChild(el("span", "matchlabel", j._m.thin
-          ? "title match only — this source publishes no description"
-          : j._m.have.length + " of " + (j._m.have.length + j._m.missing.length) + " requirements covered"));
+          ? "limited text match — verify the full posting"
+          : j._m.have.length + " of " + (j._m.have.length + j._m.missing.length) + " detected skill terms mentioned"));
         main.appendChild(mb);
+        if (!j._screen || j._screenVersion !== resumeVersion) {
+          j._screen = financeMatcher.assess(j, resume.text);
+          j._screenVersion = resumeVersion;
+        }
+        if (j._screen.requiredGaps.length) {
+          main.appendChild(el("p", "screen-note", j._screen.requiredGaps.length +
+            " explicit requirement(s) need resume evidence — review Details."));
+        }
       }
 
       // The skill gap, on the card. Whether a posting wants something you
@@ -1772,7 +1774,7 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
       // list and the description.
       if (j._m && !j._m.thin && j._m.missing.length) {
         var gp = el("div", "gaps");
-        gp.appendChild(el("span", "gaps-l", "Missing"));
+        gp.appendChild(el("span", "gaps-l", "Not evidenced"));
         j._m.missing.slice(0, 6).forEach(function (s) {
           gp.appendChild(el("span", "gapchip", titleCase(s)));
         });
@@ -1783,11 +1785,11 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
         main.appendChild(gp);
       } else if (j._m && !j._m.thin && j._m.have.length) {
         // Nothing missing is a genuinely strong signal, and printing an
-        // empty "Missing" row would bury it.
+        // empty "Not evidenced" row would bury it.
         var gpc = el("div", "gaps");
-        gpc.appendChild(el("span", "gaps-l", "Covered"));
+        gpc.appendChild(el("span", "gaps-l", "Mentioned"));
         gpc.appendChild(el("span", "gapchip have",
-          "every skill this posting names"));
+          "all detected skill terms — verify proficiency"));
         main.appendChild(gpc);
       } else if (!resume && j.missing && j.missing !== "-") {
         // No resume loaded yet: show what the posting asks for, so the
@@ -1827,17 +1829,18 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
       row.appendChild(side);
 
       var ex = el("div", "expand");
+      if (resume && j._screen) ex.appendChild(screeningPanel(j._screen));
 
       if (j.why) {
         var b1 = el("div", "block");
-        b1.appendChild(el("h4", null, "Why this can convert"));
+        b1.appendChild(el("h4", null, "About this listing"));
         b1.appendChild(el("p", null, j.why));
         ex.appendChild(b1);
       }
 
       if (j._m && !j._m.thin && j._m.missing.length) {
         var b2 = el("div", "block");
-        b2.appendChild(el("h4", null, "Asked for, but not in your resume"));
+        b2.appendChild(el("h4", null, "Posting terms not evidenced in your resume"));
         var cs = el("div", "chipset");
         j._m.missing.slice(0, 14).forEach(function (s) { cs.appendChild(el("span", "chip", titleCase(s))); });
         b2.appendChild(cs);
@@ -1932,7 +1935,7 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
     var totBox = document.getElementById("ribbon-total");
     if (totBox) {
       var filtered = !!(state.family || state.source || state.city ||
-                        state.salary || state.exp || state.fresh || state.query);
+                        state.salary || state.exp || state.fresh || state.query || state.employment);
       totBox.querySelector(".n").textContent = total;
       totBox.querySelector(".l").textContent = filtered ? "matching" : "finance roles";
     }
@@ -1952,12 +1955,72 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
     paintSelect("city", "city", function (j, v) { return (j.cities || []).indexOf(v) >= 0; });
     paintSelect("salary", "salary", function (j, v) { return inRange(j.sal_lo, j.sal_hi, v); });
     paintSelect("exp", "exp", function (j, v) { return inRange(j.exp_lo, j.exp_hi, v); });
+    paintSelect("employment", "employment", function (j, v) { return (j.type || "").indexOf(v) === 0; });
     paintSelect("fresh", "fresh", function (j, v) {
       return j.days_old != null && j.days_old <= +v;
     });
   }
 
   function rerender() { shown = PAGE; render(); }
+
+  function screeningPanel(report) {
+    var box = el("section", "screening");
+    box.appendChild(el("h4", null, "Recruiter screening checks"));
+    box.appendChild(el("p", "screen-note", "This compares wording in the available posting and your resume. It cannot verify proficiency, credentials or an employer's rejection rules."));
+    if (report.limited) box.appendChild(el("p", "screen-note", "Limited posting text: open the original job to check requirements that may be missing here."));
+    if (!report.checks.length) box.appendChild(el("p", null, "No explicit skill requirement could be reliably separated from the available text. Review the original posting."));
+    report.checks.forEach(function (check) {
+      var item = el("div", "screen-item " + check.kind);
+      var label = check.kind === "required" ? "Explicit requirement" : check.kind === "preferred" ? "Preferred skill" : "Confirm the requirement / alternatives";
+      item.appendChild(el("strong", null, label));
+      item.appendChild(el("blockquote", null, check.evidence));
+      if (check.present.length) item.appendChild(el("p", null, "Mentioned: " + check.present.map(titleCase).join(", ")));
+      if (check.absent.length) item.appendChild(el("p", null, "Not evidenced: " + check.absent.map(titleCase).join(", ")));
+      item.appendChild(el("p", "screen-note", check.kind === "verify"
+        ? "This wording contains alternatives or mixed conditions. Check the complete requirement before deciding whether you qualify."
+        : check.absent.length
+          ? "If you have this experience, add a truthful example of the task, tool and result. Otherwise treat it as a learning gap; do not claim an unearned skill or credential."
+          : "A keyword mention does not establish proficiency. Prepare an example and verify any credential or experience requirement."));
+      box.appendChild(item);
+    });
+    box.appendChild(el("h4", null, "Verify before applying"));
+    var list = el("ul");
+    report.manual.forEach(function (text) { list.appendChild(el("li", null, text)); });
+    list.appendChild(el("li", null, "Confirm salary expectations, location, work mode, shifts and joining date in the employer's application."));
+    box.appendChild(list);
+    return box;
+  }
+
+  function paintCareerGuide() {
+    var select = document.getElementById("career-family");
+    CATALOG.families.forEach(function (family) {
+      var option = el("option", null, family.name);
+      option.value = family.name;
+      select.appendChild(option);
+    });
+    function paint() {
+      var family = CATALOG.families.find(function (f) { return f.name === select.value; });
+      var box = document.getElementById("career-content");
+      box.textContent = "";
+      var count = JOBS.filter(function (j) { return j.family === family.name; }).length;
+      box.appendChild(el("p", null, count ? count + " current listings in this collected dataset." : "No listings in this collected dataset yet. The expanded searches can add roles on the next collection."));
+      box.appendChild(el("p", null, "Typical skills to explore: " + family.skills.map(titleCase).join(", ") + "."));
+      box.appendChild(el("p", null, "Early career: show coursework, internships or projects. Experienced roles: show relevant outcomes and ownership. Leadership: show team scope, decisions and business results."));
+      if (count) {
+        var button = el("button", "btn", "Browse these roles");
+        button.addEventListener("click", function () {
+          document.getElementById("reset").click();
+          var chip = Array.prototype.find.call(document.getElementById("fam-chips").children,
+            function (b) { return b.dataset.fam === family.name; });
+          if (chip) chip.click();
+          document.getElementById("rows").scrollIntoView({ block: "start" });
+        });
+        box.appendChild(button);
+      }
+    }
+    select.addEventListener("change", paint);
+    paint();
+  }
 
   // ---------- chrome ----------
   function paintChrome() {
@@ -2027,13 +2090,14 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
       citySel.appendChild(o);
     });
 
-    var weights = [["Direct employer", 26], ["Freshness", 22], ["Competition", 16],
-                   ["Family fit", 16], ["Resume fit", 12], ["Experience band", 8]];
+    // Rounded public listing-priority weights: 26/22/16, sum 64.
+    var weights = [["Employer verification", 41], ["Freshness", 34], ["Reported competition", 25]];
+    var wmax = weights[0][1];
     var wbox = document.getElementById("weights");
     weights.forEach(function (w) {
       var r = el("div", "wrow");
       var bar = el("div", "wbar");
-      var i = el("i"); i.style.width = (w[1] / 26 * 100) + "%";
+      var i = el("i"); i.style.width = (w[1] / wmax * 100) + "%";
       bar.appendChild(i);
       var lab = el("div");
       lab.appendChild(el("div", null, w[0]));
@@ -2108,7 +2172,7 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
     applySearch();
     searchInput.focus();
   });
-  ["city", "source", "salary", "exp", "fresh"].forEach(function (id) {
+  ["city", "source", "salary", "exp", "fresh", "employment"].forEach(function (id) {
     document.getElementById(id).addEventListener("change", function (e) {
       state[id] = e.target.value;
       // Highlight a dropdown that is actually narrowing the list, so it
@@ -2129,8 +2193,8 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
     searchTerms = [];
     clearSearch.hidden = true;
     state.family = state.source = state.city = "";
-    state.salary = state.exp = state.fresh = "";
-    ["city", "source", "salary", "exp", "fresh"].forEach(function (id) {
+    state.salary = state.exp = state.fresh = state.employment = "";
+    ["city", "source", "salary", "exp", "fresh", "employment"].forEach(function (id) {
       var sel = document.getElementById(id);
       sel.value = "";
       sel.classList.remove("set");
@@ -2150,6 +2214,7 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
   } catch (e) {}
 
   paintChrome();
+  paintCareerGuide();
   render();
   loadAnalytics();
 })();

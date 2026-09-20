@@ -206,6 +206,12 @@ def _publish_company(company):
 
 def _row(job, tier, index):
     jd = strip_for_publication(job)
+    # Preserve requirement clauses beyond the display excerpt. Link-only
+    # sources retain no description or derived requirement text.
+    full_text = redact_contacts(_clean(job.get("description", ""))) if jd else ""
+    requirement_parts = re.split(r"(?<=[.;!?])\s+", full_text)
+    requirement_text = "\n".join(part for part in requirement_parts if re.search(
+        r"\b(required|mandatory|must|essential|preferred|desirable|qualification|experience|notice|shift|relocat|certif|degree)\w*\b", part, re.I))[:7000]
     n = job.get("applicants")
     sal_lo, sal_hi = _numeric_range(job.get("salary_band"))
     exp_lo, exp_hi = _numeric_range(job.get("experience"), cap=40.0)
@@ -234,10 +240,10 @@ def _row(job, tier, index):
         "applicants": None if n is None else int(n),
         "type": _clean(job.get("employment_type")) or "",
         "ar": job.get("ar", 0),
-        # The bot's own resume score, computed against the OWNER's resume.
-        # The page recomputes this per visitor; this is the baseline.
-        "owner_resume_match": job.get("resume", 0),
         "why": redact_contacts(_clean(job.get("why"))),
+        # Everything the posting asks for, not a diff against anyone's CV.
+        # The page subtracts the visitor's own uploaded resume from this,
+        # in their browser - so there is no owner_resume_match to publish.
         "missing": redact_contacts(_clean(job.get("missing"))),
         # Never published - see redact_contacts(). "-" is the value the
         # page already treats as "no contact", so the detail panel's
@@ -247,6 +253,8 @@ def _row(job, tier, index):
         "skills": redact_contacts(_clean(job.get("skills"))[:400]),
         # Empty for link-only sources - see strip_for_publication().
         "jd": jd,
+        "jd_truncated": len(full_text) > len(jd),
+        "requirement_text": requirement_text,
         "has_text": bool(jd),
     }
 

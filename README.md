@@ -1,6 +1,7 @@
 # TalentTap — finance job board
 
-A self-updating job board for Indian accounts-receivable and finance roles.
+A self-updating job board for finance careers in India, from internships
+to leadership, including accounting, banking, investment and insurance.
 A bot collects postings from Naukri, LinkedIn and Workday twice a day,
 scores each one, and bakes the results into a single web page.
 
@@ -13,6 +14,11 @@ calls at view time. Everything below runs in your own browser:
 
 - **Search** titles, companies, locations and skills as you type. Combine
   keywords with the filters below, or clear the search to browse again.
+- **Explore 26 career areas** and their typical skills in the career guide.
+  Collection queries and classification share [finance_catalog.py](finance_catalog.py).
+- **Review screening evidence.** Explicit requirements, preferred skills,
+  alternatives and conditions to verify are shown with posting excerpts.
+  A missing term is not proof of a missing skill or a rejection prediction.
 - **Filter** by job family (AR, Credit & Collections, AP, Payroll, Tax,
   Audit, Treasury, FP&A, R2R, Accounting), city, salary band, experience
   and how recently the job was posted.
@@ -27,14 +33,50 @@ calls at view time. Everything below runs in your own browser:
   tracking system, or a recognised staffing firm, get a definite label;
   the rest are marked unverified rather than guessed at.
 
+## Keywords collect, resumes only match
+
+The two halves are deliberately separate, and only one of them is personal.
+
+**Collection and ranking are keyword-driven and identical for everyone.**
+The portals are asked for the stems in `PRIMARY_QUERIES`, `HIDDEN_QUERIES`
+and `LINKEDIN_QUERIES` in [naukri_job_bot.py](naukri_job_bot.py), across
+`LOCATIONS`. The interview-odds number is built from directness,
+freshness, competition, family fit and experience band — nothing else.
+No resume is read anywhere in the bot. The public site's **listing priority**
+is recalculated separately from employer verification, freshness and reported
+applicant counts. It does not use the owner's salary or experience, and is
+not an interview probability.
+
+**Matching is per visitor and stays on their machine.** The resume upload
+on the page parses and scores the CV in the browser, recomputes every
+row's match, and derives the skill gap from the posting's own asks. It is
+never uploaded, and it never touches the published numbers.
+
+This used to be muddier: the score carried a 12% "does the owner's CV
+cover this JD" term, and the skills column was a diff against that same
+CV — a private number shipped to strangers who could not read it. Both
+are gone. `Skills the Posting Asks For` now means exactly that.
+
 ## Current run
 
-3,488 scored postings — 2,237 shortlist, 1,251 near-miss — of which 3,318
-carry enough job text to match a resume against.
+The website shows the current run's counts and collection timestamp.
+Collection accepts all salary bands and experience levels, targets postings
+within seven days and searches 15 Indian hiring hubs. Broader career queries
+take effect on the next collection; rebuilding reclassifies existing public
+rows but does not fetch new jobs. Coverage depends on source availability,
+search budgets and employer feeds; it is not an exhaustive census of jobs.
 
-Collection targets roles at ₹10–15 LPA, posted within 7 days, across
-Bengaluru, Chennai, Hyderabad, Mumbai, Pune, Delhi, Gurgaon, Noida,
-Kolkata and Coimbatore.
+The career guide's examples are not eligibility rules. Screening uses only
+available posting text, treats equivalent skill names together and keeps
+partial qualifications such as CA Inter distinct from qualified CA. Link-only
+sources retain no job description or derived requirement text. Read the full
+posting before applying; the tool cannot verify competence or credentials.
+
+See [the recruiter review and roadmap](HR_REVIEW.md) for the findings and
+recommended next improvements.
+
+Validation: `python -m unittest discover -s tests -v`. The JavaScript checks
+require Node.js or the Node runtime bundled with Playwright.
 
 ## What is deliberately not published
 
@@ -47,7 +89,9 @@ Kolkata and Coimbatore.
   a link out to the original posting, nothing more. `strip_for_publication()`
   enforces this.
 - **Login sessions, resumes and the run spreadsheet.** All excluded by
-  [.gitignore](.gitignore) and kept on the machine that runs the bot.
+  [.gitignore](.gitignore) and kept on the machine that runs the bot. The
+  `*.docx` / `*.pdf` rule stays even though the bot no longer reads a
+  resume — a CV left in this folder should still never be committable.
 
 ## Analytics and the daily report
 

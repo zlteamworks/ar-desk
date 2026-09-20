@@ -22,6 +22,8 @@ read and scored inside the visitor's own browser and never transmitted.
 import json
 import os
 import sys
+from copy import deepcopy
+from finance_catalog import public_catalog, classify_finance, listing_priority
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMPLATE = os.path.join(SCRIPT_DIR, "site_template.html")
@@ -48,6 +50,26 @@ def build(payload, template_path=TEMPLATE, out_path=OUT):
 
     if MARKER not in html:
         raise SystemExit(f"Template is missing the {MARKER} marker.")
+
+    # Reclassify existing public rows too; new searches populate on collection.
+    # A listing score is independent of the collector owner's salary/experience.
+    payload = deepcopy(payload)
+    for job in payload.get("jobs", []):
+        family, basis, strength = classify_finance(job)
+        if family and (basis == "title" or strength >= .3):
+            job["family"] = family
+        job["score"] = listing_priority(job)
+        job["why"] = "Listing priority uses posting freshness, employer verification and reported applicant counts. It does not predict interview chances."
+        if job.get("salary_basis", "").startswith(("Est.", "Not disclosed", "Unknown")):
+            job.update(salary_basis="Not disclosed", salary_band="-", sal_lo=None, sal_hi=None)
+    payload["finance_catalog"] = public_catalog()
+    payload.setdefault("counts", {})["by_family"] = {}
+    for job in payload.get("jobs", []):
+        family = job.get("family", "Finance")
+        payload["counts"]["by_family"][family] = payload["counts"]["by_family"].get(family, 0) + 1
+
+    with open(os.path.join(SCRIPT_DIR, "finance_match.js"), encoding="utf-8") as f:
+        html = html.replace("/*__FINANCE_MATCH__*/", f.read())
 
     # json.dumps output is safe to drop into a <script type="application/json">
     # block except for a literal "</script>" inside a string value, which
