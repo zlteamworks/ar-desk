@@ -38,7 +38,7 @@ contact is never exposed accidentally or without the UI's source label.
 import json
 import os
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # Sources whose job text may be republished on the public page.
 REPUBLISHABLE_TEXT = {"Naukri", "Workday"}
@@ -254,6 +254,7 @@ def _row(job, tier, index):
         "exp_hi": exp_hi,
         "applicants": None if n is None else int(n),
         "type": _clean(job.get("employment_type")) or "",
+        "apply_method": _clean(job.get("apply_method")) or "",
         "ar": job.get("ar", 0),
         "why": redact_contacts(_clean(job.get("why"))),
         # Everything the posting asks for, not a diff against anyone's CV.
@@ -311,14 +312,93 @@ def build_payload(shortlist, near_misses, stats, config):
     }
 
 
+def _refresh_counts(payload):
+    jobs = payload.get("jobs", [])
+    by_source, by_family, by_city = {}, {}, {}
+    for job in jobs:
+        source, family = job.get("source", ""), job.get("family") or "Finance"
+        by_source[source] = by_source.get(source, 0) + 1
+        by_family[family] = by_family.get(family, 0) + 1
+        for city in (job.get("cities") or _cities_in(job.get("location"))):
+            by_city[city] = by_city.get(city, 0) + 1
+    payload["counts"] = {
+        "total": len(jobs),
+        "shortlist": sum(1 for job in jobs if job.get("tier") == "shortlist"),
+        "near": sum(1 for job in jobs if job.get("tier") == "near"),
+        "by_source": by_source, "by_family": by_family, "by_city": by_city,
+        "with_text": sum(1 for job in jobs if job.get("has_text")),
+    }
+
+
+def merge_previous_payload(payload, previous, max_days_old, now=None):
+    """Merge a parsed prior payload into a newly collected payload."""
+    now = now or datetime.now()
+    try:
+        previous_at = datetime.fromisoformat(previous.get("generated_at", ""))
+    except (ValueError, TypeError):
+        return 0
+    elapsed_days = max(0, (now.date() - previous_at.date()).days)
+    current_ids = {str(job.get("id")) for job in payload.get("jobs", [])}
+    def listing_key(job):
+        return tuple(re.sub(r"[^a-z0-9]", "", str(job.get(field) or "").lower())[:limit]
+                     for field, limit in (("title", 60), ("company", 40), ("location", 20)))
+    current_keys = {listing_key(job) for job in payload.get("jobs", [])}
+    retained = []
+    for old in previous.get("jobs", []):
+        old_id = str(old.get("id") or "")
+        old_key = listing_key(old)
+        prior_age = old.get("days_old")
+        if (not old_id or old_id in current_ids or old_key in current_keys
+                or not isinstance(prior_age, int)):
+            continue
+        age = prior_age + elapsed_days
+        if age > max_days_old or not old.get("url"):
+            continue
+        row = dict(old)
+        row["days_old"] = age
+        row["age"] = "Today" if age <= 0 else "Yesterday" if age == 1 else f"{age}d ago"
+        row["posted"] = (now - timedelta(days=age)).strftime("%d-%b-%Y")
+        row["carried_forward"] = True
+        if row.get("source") == "Workday" and not row.get("apply_method"):
+            row["apply_method"] = "Employer site"
+        retained.append(row)
+        current_ids.add(old_id)
+        current_keys.add(old_key)
+    if retained:
+        payload["jobs"].extend(retained)
+        payload.setdefault("stats", []).append(["Retained from rolling 7-day snapshot", len(retained)])
+        _refresh_counts(payload)
+    return len(retained)
+
+
+def merge_recent_snapshot(payload, path, max_days_old):
+    """Keep still-fresh roles missed by a throttled daily portal sweep.
+
+    Portal result sets are sampled and non-deterministic: a live seven-day
+    role can disappear from today's first pages even though it was collected
+    yesterday.  The public payload is therefore also a bounded rolling cache.
+    Rows age out normally and a freshly collected row always wins by id.
+    """
+    if not path or not os.path.exists(path):
+        return 0
+    try:
+        with open(path, encoding="utf-8") as handle:
+            previous = json.load(handle)
+    except (OSError, ValueError, TypeError, json.JSONDecodeError):
+        return 0
+    return merge_previous_payload(payload, previous, max_days_old)
+
+
 def export_site_json(shortlist, near_misses, stats, config, path):
     """Write the website payload. Returns the path written."""
     payload = build_payload(shortlist, near_misses, stats, config)
+    retained = merge_recent_snapshot(payload, path, int(config.get("max_days_old", 7)))
     with open(path, "w", encoding="utf-8") as f:
         json.dump(payload, f, ensure_ascii=False, indent=1)
     size = os.path.getsize(path)
     print(f"  -> {os.path.basename(path)} "
           f"({payload['counts']['total']} jobs, "
           f"{payload['counts']['with_text']} with matchable text, "
-          f"{size // 1024} KB)")
+          f"{size // 1024} KB"
+          + (f", {retained} retained from prior run" if retained else "") + ")")
     return path

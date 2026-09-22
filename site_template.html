@@ -979,13 +979,18 @@ select { border-radius: 9px; min-height: 38px; }
     <div class="job-search" role="search" aria-label="Search job listings">
       <label for="job-search">Search jobs</label>
       <div class="search-field">
-        <input id="job-search" type="search" placeholder="e.g. Accounts Receivable, Accenture, SAP" aria-describedby="search-hint" aria-controls="rows" autocomplete="off">
+        <input id="job-search" type="search" placeholder='e.g. AR, "financial analyst", -intern' aria-describedby="search-hint" aria-controls="rows" autocomplete="off">
         <button class="btn" id="clear-search" type="button" hidden>Clear search</button>
       </div>
-      <p class="search-hint" id="search-hint">Search titles, companies, locations and skills. Results update as you type.</p>
+      <p class="search-hint" id="search-hint">Search titles, companies, locations, families, skills and job text. Finance abbreviations work; use quotes for a phrase or -word to exclude.</p>
     </div>
     <select id="city" aria-label="City"><option value="">All cities</option></select>
     <select id="source" aria-label="Job source"><option value="">All sources</option></select>
+    <select id="apply_method" aria-label="Application method">
+      <option value="">Any application method</option>
+      <option value="Easy Apply">LinkedIn Easy Apply</option>
+      <option value="Employer site">Employer site</option>
+    </select>
     <select id="salary" aria-label="Salary band">
       <option value="">Any salary</option>
       <option value="0-5">Up to 5 LPA</option>
@@ -1754,14 +1759,41 @@ select { border-radius: 9px; min-height: 38px; }
   // is the number this page exists to produce - with no resume loaded it
   // falls back to odds on its own, see visible().
   var state = { family: "", source: "", city: "", salary: "", exp: "",
-                fresh: "", sort: "match", query: "", employment: "", contact: "" };
-  var searchTerms = [];
+                fresh: "", sort: "match", query: "", employment: "", contact: "",
+                apply_method: "" };
+  var searchGroups = [], excludedTerms = [];
   var searchTimer;
+  var SEARCH_ALIASES = {
+    "ar": ["accounts receivable", "receivable", "order to cash", "o2c"],
+    "ap": ["accounts payable", "payable", "procure to pay", "p2p"],
+    "o2c": ["order to cash", "o2c", "accounts receivable"],
+    "p2p": ["procure to pay", "p2p", "accounts payable"],
+    "r2r": ["record to report", "r2r", "general ledger"],
+    "fpa": ["fp&a", "fp & a", "financial planning and analysis"],
+    "fp&a": ["fp&a", "fp & a", "financial planning and analysis"],
+    "gl": ["general ledger", "gl accountant", "gl accounting"],
+    "kyc": ["kyc", "know your customer"],
+    "aml": ["aml", "anti money laundering", "financial crime"]
+  };
   // Build once: the list and every facet reuse this text on each search.
   JOBS.forEach(function (j) {
     j._searchText = [j.title, j.company, j.location, (j.cities || []).join(" "),
-      j.family, j.skills].filter(Boolean).join(" ").toLowerCase().replace(/\s+/g, " ");
+      j.family, j.skills, j.type, j.apply_method, j.jd, j.requirement_text,
+      j.why].filter(Boolean).join(" ").toLowerCase().replace(/\s+/g, " ");
   });
+
+  function parseSearch(value) {
+    searchGroups = []; excludedTerms = [];
+    var re = /(-?)(?:"([^"]+)"|(\S+))/g, m;
+    while ((m = re.exec((value || "").toLowerCase())) !== null) {
+      var term = (m[2] || m[3] || "").trim();
+      if (!term) continue;
+      var key = term.replace(/[^a-z0-9&]/g, "");
+      var variants = SEARCH_ALIASES[term] || SEARCH_ALIASES[key] || [term];
+      if (m[1] === "-") excludedTerms.push(term);
+      else searchGroups.push(variants);
+    }
+  }
   var PAGE = 150;        // rows drawn at once
   var shown = PAGE;      // grows via the show-more button
 
@@ -1818,7 +1850,10 @@ select { border-radius: 9px; min-height: 38px; }
   // facet's own filter to its own count makes every unselected chip read
   // zero the moment you pick one, which tells you nothing.
   function passes(j, skip) {
-    if (!searchTerms.every(function (term) { return j._searchText.indexOf(term) >= 0; })) return false;
+    if (!searchGroups.every(function (group) {
+      return group.some(function (term) { return j._searchText.indexOf(term) >= 0; });
+    })) return false;
+    if (excludedTerms.some(function (term) { return j._searchText.indexOf(term) >= 0; })) return false;
     if (skip !== "family" && state.family && (j.family || "Finance") !== state.family) return false;
     if (skip !== "source" && state.source && j.source !== state.source) return false;
     if (skip !== "city" && state.city && (j.cities || []).indexOf(state.city) < 0) return false;
@@ -1828,6 +1863,7 @@ select { border-radius: 9px; min-height: 38px; }
     if (skip !== "employment" && state.employment && (j.type || "").indexOf(state.employment) !== 0) return false;
     if (skip !== "contact" && state.contact === "available" && !hasContact(j)) return false;
     if (skip !== "contact" && state.contact === "unavailable" && hasContact(j)) return false;
+    if (skip !== "apply_method" && state.apply_method && j.apply_method !== state.apply_method) return false;
     return true;
   }
 
@@ -1893,7 +1929,8 @@ select { border-radius: 9px; min-height: 38px; }
       list.length === 1 ? " role" : " roles"));
     paintCounts(list.length);
     document.getElementById("reset").hidden = !(state.family || state.source ||
-      state.city || state.salary || state.exp || state.fresh || state.query || state.employment || state.contact);
+      state.city || state.salary || state.exp || state.fresh || state.query ||
+      state.employment || state.contact || state.apply_method);
 
     if (!list.length) {
       var e = el("div", "empty");
@@ -1959,6 +1996,7 @@ select { border-radius: 9px; min-height: 38px; }
         ? j.salary_band + " LPA · " + j.salary_basis
         : j.salary_basis || "CTC not shown"));
       if (j.applicants != null) meta.appendChild(el("span", null, j.applicants === 0 ? "be an early applicant" : j.applicants + " applicants"));
+      if (j.apply_method) meta.appendChild(el("span", "apply-method", j.apply_method));
       if (hasContact(j)) meta.appendChild(el("span", "contact-meta", "HR contact available"));
       main.appendChild(meta);
       if (j.type) meta.appendChild(el("span", null, j.type));
@@ -2029,7 +2067,7 @@ select { border-radius: 9px; min-height: 38px; }
       row.appendChild(main);
 
       var side = el("div", "side");
-      var apply = el("a", "applybtn", "Apply");
+      var apply = el("a", "applybtn", j.apply_method === "Easy Apply" ? "Easy Apply" : "Apply");
       apply.href = j.url || "#";
       apply.target = "_blank";
       apply.rel = "noopener noreferrer";
@@ -2166,7 +2204,8 @@ select { border-radius: 9px; min-height: 38px; }
     var totBox = document.getElementById("ribbon-total");
     if (totBox) {
       var filtered = !!(state.family || state.source || state.city ||
-                        state.salary || state.exp || state.fresh || state.query || state.employment || state.contact);
+                        state.salary || state.exp || state.fresh || state.query ||
+                        state.employment || state.contact || state.apply_method);
       totBox.querySelector(".n").textContent = total;
       totBox.querySelector(".l").textContent = filtered ? "matching" : "finance roles";
     }
@@ -2192,6 +2231,9 @@ select { border-radius: 9px; min-height: 38px; }
     });
     paintSelect("contact", "contact", function (j, v) {
       return v === "available" ? hasContact(j) : !hasContact(j);
+    });
+    paintSelect("apply_method", "apply_method", function (j, v) {
+      return j.apply_method === v;
     });
   }
 
@@ -2387,7 +2429,7 @@ select { border-radius: 9px; min-height: 38px; }
   function applySearch() {
     clearTimeout(searchTimer);
     state.query = searchInput.value.toLowerCase().trim().replace(/\s+/g, " ");
-    searchTerms = state.query ? state.query.split(" ") : [];
+    parseSearch(state.query);
     clearSearch.hidden = !searchInput.value;
     if (state.query) track("used/filtered", "Applied a filter");
     rerender();
@@ -2406,7 +2448,7 @@ select { border-radius: 9px; min-height: 38px; }
     applySearch();
     searchInput.focus();
   });
-  ["city", "source", "salary", "exp", "fresh", "employment", "contact"].forEach(function (id) {
+  ["city", "source", "apply_method", "salary", "exp", "fresh", "employment", "contact"].forEach(function (id) {
     document.getElementById(id).addEventListener("change", function (e) {
       state[id] = e.target.value;
       // Highlight a dropdown that is actually narrowing the list, so it
@@ -2424,11 +2466,11 @@ select { border-radius: 9px; min-height: 38px; }
   document.getElementById("reset").addEventListener("click", function () {
     clearTimeout(searchTimer);
     searchInput.value = state.query = "";
-    searchTerms = [];
+    searchGroups = []; excludedTerms = [];
     clearSearch.hidden = true;
     state.family = state.source = state.city = "";
-    state.salary = state.exp = state.fresh = state.employment = state.contact = "";
-    ["city", "source", "salary", "exp", "fresh", "employment", "contact"].forEach(function (id) {
+    state.salary = state.exp = state.fresh = state.employment = state.contact = state.apply_method = "";
+    ["city", "source", "apply_method", "salary", "exp", "fresh", "employment", "contact"].forEach(function (id) {
       var sel = document.getElementById(id);
       sel.value = "";
       sel.classList.remove("set");

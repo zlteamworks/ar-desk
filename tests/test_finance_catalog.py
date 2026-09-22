@@ -3,6 +3,7 @@ from pathlib import Path
 import subprocess
 import tempfile
 import unittest
+from unittest.mock import patch
 
 import finance_catalog as catalog
 import naukri_job_bot as bot
@@ -23,6 +24,59 @@ class FinanceCoverageTests(unittest.TestCase):
         self.assertIn(("Visa", "visa", "wd5", "Visa"), workday_source.TENANTS)
         self.assertEqual(len(workday_source.TENANTS), len(set(workday_source.TENANTS)))
         self.assertGreaterEqual(workday_source.DETAIL_LIMIT, 300)
+
+    def test_linkedin_easy_apply_is_collected_and_exported(self):
+        url = bot.linkedin_search_url("financial analyst", "India", 0, easy_apply=True)
+        self.assertIn("f_AL=true", url)
+        job = bot.normalize_linkedin({
+            "title": "Financial Analyst", "company": "Example", "location": "Pune",
+            "url": "https://www.linkedin.com/jobs/view/12345678",
+            "easyApplySearch": True,
+        })
+        self.assertEqual(job["apply_method"], "Easy Apply")
+        row = exporter._row(job, "shortlist", 0)
+        self.assertEqual(row["apply_method"], "Easy Apply")
+
+    def test_workday_discovers_tenant_facet_and_current_card_schema(self):
+        import workday_source as workday
+        facet_response = {"facets": [{
+            "descriptor": "Location Country", "facetParameter": "Location_Country",
+            "values": [{"descriptor": "India", "id": "tenant-india-id"}],
+        }]}
+        with patch.object(workday, "_post_json", return_value=facet_response):
+            self.assertEqual(
+                workday._india_facet(("Example", "example", "wd1", "Careers")),
+                ("Location_Country", "tenant-india-id"),
+            )
+        posting = {
+            "title": "Finance Analyst", "externalPath": "/job/Finance_ABC123",
+            "postedOn": "Posted Today",
+            "bulletFields": ["Bengaluru", "Karnataka", "ABC123"],
+        }
+        job = workday.normalize(posting, "Example", "example", "wd1", "Careers")
+        self.assertEqual(job["location"], "Bengaluru, Karnataka")
+        self.assertEqual(job["job_id"], "W:ABC123")
+        self.assertEqual(job["apply_method"], "Employer site")
+
+    def test_rolling_snapshot_retains_only_fresh_missing_jobs(self):
+        old = {
+            "generated_at": exporter.datetime.now().isoformat(timespec="seconds"),
+            "jobs": [
+                {"id": "keep", "source": "LinkedIn", "family": "Accounting",
+                 "tier": "shortlist", "days_old": 2, "age": "2d ago",
+                 "url": "https://example.test/keep", "cities": ["Pune"],
+                 "has_text": False},
+                {"id": "stale", "source": "LinkedIn", "family": "Accounting",
+                 "tier": "shortlist", "days_old": 9, "age": "9d ago",
+                 "url": "https://example.test/stale", "cities": ["Pune"],
+                 "has_text": False},
+            ],
+        }
+        current = {"jobs": [], "counts": {}, "stats": []}
+        retained = exporter.merge_previous_payload(current, old, 7)
+        self.assertEqual(retained, 1)
+        self.assertEqual([job["id"] for job in current["jobs"]], ["keep"])
+        self.assertEqual(current["counts"]["by_source"], {"LinkedIn": 1})
 
     def test_specialist_classification_and_collection_gates(self):
         cases = {

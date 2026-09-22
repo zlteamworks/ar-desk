@@ -134,7 +134,8 @@ NAUKRI_RESULTS_PER_PAGE = 100
 # LinkedIn's guest API returns 10 cards per call (NOT 25 - stepping `start`
 # by 25 silently skips 15 jobs every page).
 LINKEDIN_PAGE_SIZE = 10
-LINKEDIN_PAGES = 25          # x 10 results; country-wide search keeps call volume bounded
+LINKEDIN_PAGES = 40          # deeper country-wide paging exposes roles outside the first 250
+LINKEDIN_EASY_APPLY_PAGES = 20  # separate ranking can expose otherwise buried reqs
 # Push the salary / recency / experience cuts onto Naukri's own search
 # facets instead of downloading everything and filtering here. Measured: it
 # turns "12 of 41 disclosed CTCs in band" into "27 of 27". Set False only if
@@ -150,8 +151,8 @@ LINKEDIN_PACE_SECONDS = 1.0  # gap between bursts; LinkedIn throttles bursts,
 # Hard wall-clock caps. LinkedIn's guest API will happily 429 forever, and
 # chasing the last few pages once tripled a 90s run. Naukri is the primary
 # source for Indian AR roles; LinkedIn is a bonus, so it gets a budget.
-LINKEDIN_SEARCH_BUDGET_S = 360
-LINKEDIN_DETAIL_BUDGET_S = 240
+LINKEDIN_SEARCH_BUDGET_S = 600
+LINKEDIN_DETAIL_BUDGET_S = 360
 DETAIL_CONCURRENCY = 6       # Naukri detail fetches
 LINKEDIN_DETAIL_CONCURRENCY = 2   # LinkedIn 429s above this and we lose the
                                   # applicant counts entirely
@@ -166,7 +167,7 @@ ENRICH_SHORTLIST = True
 ENRICH_LIMIT = 4000
 # Naukri and Workday detail fetches are cheap and reliable; LinkedIn's are
 # neither, so it keeps a separate, smaller ceiling and its own time budget.
-LINKEDIN_ENRICH_LIMIT = 800
+LINKEDIN_ENRICH_LIMIT = 1200
 
 # --- Browser -----------------------------------------------------------
 SHOW_BROWSER = False        # True once if a portal starts asking for CAPTCHA
@@ -231,6 +232,15 @@ LINKEDIN_QUERIES = [
     "financial analyst", "accountant", "internal audit", "finance manager",
 ]
 LINKEDIN_CITIES = ["India"]
+
+# LinkedIn gives Easy Apply searches their own result ranking. Sampling that
+# ranking does more than label the same rows: it also exposes relevant jobs
+# buried beyond the normal search's page cap.
+LINKEDIN_EASY_APPLY_QUERIES = [
+    "accounts receivable", "accounts payable", "financial analyst",
+    "accountant", "fp&a", "audit", "tax", "finance manager",
+    "banking analyst", "investment analyst", "risk analyst",
+]
 
 # --- Interview-odds weights (relative) --------------------------------
 # Relative, not out of 100 - interview_score() divides by their sum. There
@@ -892,6 +902,14 @@ async (payload) => {
         if (k.indexOf('employment type') >= 0) etype = v;
         if (k.indexOf('seniority') >= 0) seniority = v;
       });
+      const apply = doc.querySelector('.apply-button, .top-card-layout__cta, '
+        + 'a[data-tracking-control-name*="apply"], button[aria-label*="Apply"]');
+      const applyMeta = apply ? [apply.textContent,
+        apply.getAttribute('aria-label'), apply.getAttribute('class'),
+        apply.getAttribute('data-tracking-control-name'),
+        apply.getAttribute('href')].filter(Boolean).join(' ').toLowerCase() : '';
+      const easyApply = !!apply && !/offsite/.test(applyMeta) &&
+        /easy apply|onsite|inapply/.test(applyMeta);
       out[i] = {
         applicantsText: T(doc, '.num-applicants__caption') ||
                         T(doc, 'figure.num-applicants__figure') ||
@@ -900,7 +918,9 @@ async (payload) => {
                      T(doc, '.description__text'),
         employmentType: etype,
         seniority: seniority,
-        salary: T(doc, '.compensation__salary') || T(doc, '.salary')
+        salary: T(doc, '.compensation__salary') || T(doc, '.salary'),
+        easyApply: easyApply,
+        applyOffsite: /offsite/.test(applyMeta)
       };
     } catch (e) {
       out[i] = null;
@@ -1233,12 +1253,13 @@ def enrich_naukri(page, jobs, headers):
 
 # ------------------------- LinkedIn -------------------------
 
-def linkedin_search_url(keyword, location, start):
+def linkedin_search_url(keyword, location, start, easy_apply=False):
     loc = location or "India"
     tpr = f"r{MAX_DAYS_OLD * 86400}"   # seconds window - LinkedIn's own filter
-    return ("https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/"
+    url = ("https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/"
             f"search?keywords={quote(keyword)}&location={quote(loc)}"
             f"&f_TPR={tpr}&sortBy=DD&start={start}")
+    return url + ("&f_AL=true" if easy_apply else "")
 
 
 def linkedin_detail_url(job_id):
@@ -1261,6 +1282,9 @@ def normalize_linkedin(card):
     days = days_from_iso(card.get("posted", ""))
     if days is None:
         days = days_from_label(card.get("postedLabel", ""))
+    card_text = " ".join((card.get("benefits", ""), card.get("cardText", "")))
+    easy_apply = bool(card.get("easyApplySearch") or
+                      re.search(r"\beasy\s+apply\b", card_text, re.I))
     return {
         "source": "LinkedIn",
         "job_id": "L:" + (jid or card.get("url", "") or title),
@@ -1276,6 +1300,7 @@ def normalize_linkedin(card):
         "days_old": days,
         "reviews": "",
         "applicants": extract_applicants(card.get("cardText", "")),
+        "apply_method": "Easy Apply" if easy_apply else "",
         "url": card.get("url", ""),
     }
 
@@ -1288,6 +1313,10 @@ def linkedin_search_urls(queries):
         for loc in LINKEDIN_CITIES:
             for q in queries:
                 urls.append(linkedin_search_url(q, loc, pg * LINKEDIN_PAGE_SIZE))
+            if pg < LINKEDIN_EASY_APPLY_PAGES:
+                for q in LINKEDIN_EASY_APPLY_QUERIES:
+                    urls.append(linkedin_search_url(
+                        q, loc, pg * LINKEDIN_PAGE_SIZE, easy_apply=True))
     return urls
 
 
@@ -1296,7 +1325,7 @@ def fetch_linkedin(page, queries):
 
     print(f"[LinkedIn] {len(urls)} guest-API calls, "
           f"{LINKEDIN_CONCURRENCY} at a time...")
-    jobs, seen, t0 = [], set(), time.time()
+    jobs, seen, by_id, t0 = [], set(), {}, time.time()
     pending = list(urls)
 
     # LinkedIn 429s hard. Rather than lose those pages, collect the rejected
@@ -1325,10 +1354,20 @@ def fetch_linkedin(page, queries):
                     retry.append(url)
                     continue
                 for card in (res.get("jobs") or []):
+                    if "f_AL=true" in url:
+                        card["easyApplySearch"] = True
                     j = normalize_linkedin(card)
-                    if j and j["job_id"] not in seen:
-                        seen.add(j["job_id"])
-                        jobs.append(j)
+                    if not j:
+                        continue
+                    if j["job_id"] in seen:
+                        # A job first seen in the normal ranking can appear
+                        # again in the authoritative Easy Apply result set.
+                        if j.get("apply_method") == "Easy Apply":
+                            by_id[j["job_id"]]["apply_method"] = "Easy Apply"
+                        continue
+                    seen.add(j["job_id"])
+                    by_id[j["job_id"]] = j
+                    jobs.append(j)
             print(f"    {done}/{len(pending)} calls -> {len(jobs)} rows "
                   f"({time.time() - t0:.0f}s)")
             time.sleep(LINKEDIN_PACE_SECONDS)   # pacing beats getting blocked
@@ -1370,6 +1409,10 @@ def enrich_linkedin(page, jobs):
             job["salary"] = clean(res["salary"])
         if res.get("seniority"):
             job["_seniority"] = res["seniority"]
+        if res.get("easyApply"):
+            job["apply_method"] = "Easy Apply"
+        elif res.get("applyOffsite") and not job.get("apply_method"):
+            job["apply_method"] = "Employer site"
         # LinkedIn has no experience field - recover it from the JD prose so
         # the salary/experience gates have something real to work with.
         if not job.get("experience"):
@@ -1620,10 +1663,10 @@ HEADERS = ["#", "Odds", "Verdict", "Portal", "Role", "Company", "Posted By",
            "Posted", "Age", "Location", "Experience", "Salary (LPA)",
            "Salary Basis", "Applicants", "Type", "Fit %",
            "Why it can convert", "Skills the Posting Asks For",
-           "Direct Contact", "Apply Link", "Family"]
+           "Direct Contact", "Apply Link", "Family", "Apply Type"]
 
 WIDTHS = [5, 7, 15, 9, 34, 26, 11, 12, 11, 16, 12, 13, 20, 11, 16, 7,
-          46, 40, 24, 10, 22]
+          46, 40, 24, 10, 22, 16]
 
 
 def _fill(ws, row, col, color):
@@ -1666,6 +1709,7 @@ def write_sheet(ws, jobs, title):
             job["contact"],
             job["url"],
             job.get("family", "Finance"),
+            job.get("apply_method") or "-",
         ])
         r = ws.max_row
 

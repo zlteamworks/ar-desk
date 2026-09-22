@@ -116,6 +116,18 @@ TENANTS = [
     ("SiFive",          "sifive",           "wd1", "sifivecareers"),
     ("Kaplan",          "ghc",              "wd1", "Kaplan_Careers"),
     ("Sabre",           "sabre",            "wd1", "SabreJobs"),
+
+    # India finance employers verified from their public Workday posting
+    # URLs.  Keep separate career sites when an employer publishes through
+    # more than one: Workday treats the site slug as part of the API key.
+    ("Thomson Reuters", "thomsonreuters",   "wd5", "External_Career_Site"),
+    ("Morningstar",     "morningstar",      "wd5", "morningstar"),
+    ("Morningstar",     "morningstar",      "wd5", "Americas"),
+    ("Nasdaq",          "nasdaq",           "wd1", "Global_External_Site"),
+    ("DWS",             "db",               "wd3", "DWSWebsite"),
+    ("Ensono",          "itoinc",           "wd1", "EnsonoIN"),
+    ("Cognizant Workday Practice", "collaborative", "wd1", "AllOpenings"),
+    ("Huron",           "huron",            "wd1", "huroncareers"),
 ]
 
 # Workday's own relevance search is good, so a handful of broad stems beats
@@ -138,16 +150,22 @@ WORKDAY_QUERIES = [
     "insurance",
     "compliance",
     "credit",
+    "fund accounting",
+    "investment operations",
+    "trade finance",
+    "aml kyc",
+    "cost accounting",
+    "finance transformation",
 ]
 
 RESULTS_PER_PAGE = 20      # Workday's default page size
 MAX_PAGES = 2              # specialised searches rarely need more than 40
-DEEP_PAGES = 5             # broad finance/accounting searches can be larger
+DEEP_PAGES = 10            # country-filtered broad searches can exceed 100 rows
 DEEP_QUERIES = {"finance", "accounting"}
 CONCURRENCY = 12           # small independent JSON calls across many hosts
 TIMEOUT_S = 20
 DETAIL_CONCURRENCY = 6
-DETAIL_LIMIT = 300         # enough text for matching across the larger tenant set
+DETAIL_LIMIT = 1200        # avoid silently starving vague-title roles after coverage grows
 
 UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
       "AppleWebKit/537.36 (KHTML, like Gecko) "
@@ -161,6 +179,12 @@ INDIA_TOKENS = (
     "mumbai", "gurgaon", "gurugram", "noida", "kolkata", "coimbatore",
     "delhi", "ahmedabad",
 )
+
+# Country facet parameters and IDs vary by tenant.  They are discovered from
+# each public CXS response once per run (for example, one tenant currently
+# calls the parameter ``Location_Country``).  Hard-coding the commonly seen
+# UUID makes other tenants answer HTTP 400, which looks exactly like no jobs
+# because transport errors are intentionally non-fatal here.
 
 _CTX = ssl.create_default_context()
 
@@ -270,6 +294,22 @@ def strip_html(text):
     return re.sub(r"\s+", " ", text).strip()
 
 
+def posting_location(posting):
+    """Location across both Workday card schemas.
+
+    Newer tenants omit ``locationsText`` and put city/state in bulletFields,
+    followed by the requisition id.  Treating the missing field as an empty
+    location used to discard every result from those tenants.
+    """
+    direct = (posting.get("locationsText") or "").strip()
+    if direct:
+        return direct
+    fields = [str(v).strip() for v in (posting.get("bulletFields") or []) if v]
+    if fields and re.search(r"\d", fields[-1]):
+        fields = fields[:-1]
+    return ", ".join(fields[:2])
+
+
 def normalize(posting, company, tenant, host, site):
     """Map a Workday jobPosting onto the same dict shape the bot's Naukri
     and LinkedIn rows use, so scoring and Excel output need no changes."""
@@ -277,11 +317,11 @@ def normalize(posting, company, tenant, host, site):
     title = (posting.get("title") or "").strip()
     if not title:
         return None
-    loc = (posting.get("locationsText") or "").strip()
+    loc = posting_location(posting)
     req_id = ""
     bullets = posting.get("bulletFields") or []
     if bullets:
-        req_id = str(bullets[0])
+        req_id = str(bullets[-1])
     return {
         "source": "Workday",
         "job_id": "W:" + (req_id or path or title),
@@ -300,6 +340,7 @@ def normalize(posting, company, tenant, host, site):
         "days_old": parse_posted_on(posting.get("postedOn", "")),
         "reviews": "",
         "applicants": None,
+        "apply_method": "Employer site",
         "url": public_url(tenant, host, site, path),
         "_portal_ctc": False,
         "_direct_employer": True,
@@ -308,26 +349,51 @@ def normalize(posting, company, tenant, host, site):
 
 # ------------------------- fetching -------------------------
 
-def _search_one(args):
-    company, tenant, host, site, query, page = args
+def _india_facet(entry):
+    """Return (facet parameter, India id), or (None, None) for a fallback."""
+    _company, tenant, host, site = entry
+    data = _post_json(api_base(tenant, host, site) + "/jobs", {
+        "appliedFacets": {}, "limit": 1, "offset": 0, "searchText": "finance",
+    })
+    if not isinstance(data, dict):
+        return None, None
+    for facet in data.get("facets") or []:
+        label = str(facet.get("descriptor") or "").lower()
+        if "country" not in label:
+            continue
+        for value in facet.get("values") or []:
+            if str(value.get("descriptor") or "").strip().lower() == "india":
+                return facet.get("facetParameter"), value.get("id")
+    return None, None
+
+
+def _search_page(args):
+    company, tenant, host, site, query, page = args[:6]
+    facet_param, facet_id = args[6:8] if len(args) >= 8 else (None, None)
     url = api_base(tenant, host, site) + "/jobs"
     payload = {
-        "appliedFacets": {},
+        "appliedFacets": ({facet_param: [facet_id]}
+                          if facet_param and facet_id else {}),
         "limit": RESULTS_PER_PAGE,
         "offset": page * RESULTS_PER_PAGE,
         "searchText": query,
     }
     data = _post_json(url, payload)
     if data is MAINTENANCE or not isinstance(data, dict):
-        return []
+        return [], 0
     rows = []
     for posting in (data.get("jobPostings") or []):
-        if not looks_indian(posting.get("locationsText", "")):
+        if not looks_indian(posting_location(posting)):
             continue
         job = normalize(posting, company, tenant, host, site)
         if job:
             rows.append(job)
-    return rows
+    return rows, int(data.get("total") or len(data.get("jobPostings") or []))
+
+
+def _search_one(args):
+    """Compatibility wrapper used by diagnostics and focused tests."""
+    return _search_page(args)[0]
 
 
 def fetch_workday(queries=None, max_days_old=None, verbose=True):
@@ -336,19 +402,43 @@ def fetch_workday(queries=None, max_days_old=None, verbose=True):
     deduped, India-only, freshness-filtered.
     """
     queries = queries or WORKDAY_QUERIES
-    tasks = [(name, tenant, host, site, q, pg)
-             for (name, tenant, host, site) in TENANTS
-             for q in queries
-             for pg in range(DEEP_PAGES if q.lower() in DEEP_QUERIES else MAX_PAGES)]
+    with ThreadPoolExecutor(max_workers=CONCURRENCY) as pool:
+        discovered = list(pool.map(_india_facet, TENANTS))
+    facet_by_tenant = {
+        (tenant, host, site): facet
+        for (_name, tenant, host, site), facet in zip(TENANTS, discovered)
+    }
+    first_tasks = []
+    for name, tenant, host, site in TENANTS:
+        facet_param, facet_id = facet_by_tenant[(tenant, host, site)]
+        for query in queries:
+            first_tasks.append((name, tenant, host, site, query, 0,
+                                facet_param, facet_id))
 
     if verbose:
         print(f"[Workday]  {len(TENANTS)} employers x {len(queries)} queries "
-              f"= {len(tasks)} calls ({CONCURRENCY} at a time)...")
+              f"= {len(first_tasks)} first-page calls ({CONCURRENCY} at a time)...")
 
     t0 = time.time()
     jobs, seen = [], set()
     with ThreadPoolExecutor(max_workers=CONCURRENCY) as pool:
-        for rows in pool.map(_search_one, tasks):
+        first_results = list(pool.map(_search_page, first_tasks))
+
+        # Only paginate searches that actually have another page.  The old
+        # Cartesian sweep requested thousands of known-empty pages; besides
+        # wasting time, that made useful pages more likely to hit a tenant's
+        # throttling window.
+        more_tasks = []
+        for task, (_rows, total) in zip(first_tasks, first_results):
+            cap = DEEP_PAGES if task[4].lower() in DEEP_QUERIES else MAX_PAGES
+            pages = min(cap, (total + RESULTS_PER_PAGE - 1) // RESULTS_PER_PAGE)
+            more_tasks.extend([(*task[:5], page, *task[6:])
+                               for page in range(1, pages)])
+        results = first_results
+        if more_tasks:
+            results += list(pool.map(_search_page, more_tasks))
+
+        for rows, _total in results:
             for job in rows:
                 if job["job_id"] in seen:
                     continue
@@ -362,7 +452,8 @@ def fetch_workday(queries=None, max_days_old=None, verbose=True):
     if verbose:
         firms = len({j["company"] for j in jobs})
         print(f"[Workday]  {len(jobs)} India rows from {firms} employers "
-              f"in {time.time() - t0:.0f}s")
+              f"in {time.time() - t0:.0f}s "
+              f"({len(TENANTS) + len(first_tasks) + len(more_tasks)} calls)")
     return jobs
 
 

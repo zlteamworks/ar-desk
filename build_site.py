@@ -108,6 +108,11 @@ def build(payload, template_path=TEMPLATE, out_path=OUT, contacts_path=CONTACTS_
         job["why"] = "Listing priority uses posting freshness, employer verification and reported applicant counts. It does not predict interview chances."
         if job.get("salary_basis", "").startswith(("Est.", "Not disclosed", "Unknown")):
             job.update(salary_basis="Not disclosed", salary_band="-", sal_lo=None, sal_hi=None)
+        # Backfill older payloads so the application-method filter is useful
+        # immediately after a template-only rebuild. LinkedIn is deliberately
+        # not guessed: Easy Apply is populated only by collection evidence.
+        if job.get("source") == "Workday" and not job.get("apply_method"):
+            job["apply_method"] = "Employer site"
         key = _contact_key(job.get("source"), job.get("title"),
                            job.get("company"), job.get("location"))
         job["contact"] = posting_contacts.get(key, job.get("contact"))
