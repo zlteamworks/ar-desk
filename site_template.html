@@ -106,6 +106,7 @@ body {
      scores, percentages, salary bands, counts. Tabular digits keep those
      columns straight instead of jittering as the numbers change. */
   font-variant-numeric: tabular-nums;
+  overflow-x: hidden;
 }
 .wrap {
   max-width: var(--maxw);
@@ -411,6 +412,7 @@ textarea {
   border-bottom: 1px solid var(--rule-soft);
 }
 .job-search { flex: 1 0 100%; min-width: 0; }
+.controls > select { flex: 1 1 145px; max-width: 210px; }
 .job-search label { display: block; font-size: 13px; font-weight: 700; margin-bottom: var(--s1); }
 .search-field { display: flex; gap: var(--s2); align-items: center; }
 .search-field input {
@@ -426,6 +428,9 @@ textarea {
 .career-guide summary { cursor: pointer; font-weight: 700; }
 .career-guide select { max-width: 100%; margin-block: var(--s3); }
 .career-guide p, .screening p { margin: var(--s2) 0; }
+.post-watch { margin-top: var(--s3); padding-top: var(--s3); border-top: 1px solid var(--rule-soft); }
+.post-links { display: flex; flex-wrap: wrap; gap: var(--s2); margin-top: var(--s3); }
+.post-links a { text-decoration: none; }
 .screening { margin-top: var(--s3); border-top: 1px solid var(--rule); padding-top: var(--s3); }
 .screening h4 { margin: var(--s2) 0; }
 .screen-item { padding: var(--s3); border-left: 3px solid var(--warn); background: var(--surface-2); margin-top: var(--s2); overflow-wrap: anywhere; }
@@ -577,6 +582,26 @@ select.set { border-color: var(--accent); color: var(--accent); font-weight: 700
   white-space: nowrap; transition: border-color .12s, color .12s;
 }
 .linkbtn:hover { border-color: var(--accent); color: var(--accent); }
+.tailorbtn { font: inherit; background: var(--surface); cursor: pointer; }
+.tailor-pack { border: 1px solid #B8DAD4; border-radius: 14px; padding: clamp(14px, 2.5vw, 24px); background: #F1F8F6; }
+.tailor-head { display: flex; justify-content: space-between; gap: var(--s4); align-items: flex-start; flex-wrap: wrap; }
+.tailor-score { display: flex; flex-wrap: wrap; gap: var(--s2); }
+.tailor-score span { display: inline-flex; align-items: baseline; gap: 5px; padding: 7px 10px; border: 1px solid #CFE3DE; border-radius: 999px; background: #fff; color: #49625C; font-size: 11px; font-weight: 700; }
+.tailor-score b { color: #0B725F; font-size: 15px; }
+.tailor-actions { display: flex; flex-wrap: wrap; gap: var(--s2); margin: var(--s3) 0 var(--s4); }
+.tailor-note { margin-bottom: var(--s3) !important; font-size: 12.5px !important; }
+.cv-sheet { width: min(100%, 794px); min-height: 900px; margin: 0 auto; padding: clamp(28px, 6vw, 58px); background: #fff; color: #17211F; border: 1px solid #D8E0DE; box-shadow: 0 18px 45px rgba(21,49,43,.12); font-family: Arial, sans-serif; line-height: 1.45; outline: 0; }
+.cv-sheet:focus { border-color: #0D8B7B; box-shadow: 0 0 0 3px rgba(13,139,123,.12), 0 18px 45px rgba(21,49,43,.12); }
+.cv-sheet h1 { margin: 0; color: #102A26; font-size: 30px; letter-spacing: -.025em; text-align: center; }
+.cv-sheet .cv-contact { margin: 7px 0 24px; text-align: center; color: #4C5F5A; font-size: 11.5px; overflow-wrap: anywhere; }
+.cv-sheet h2 { margin: 20px 0 8px; padding-bottom: 5px; border-bottom: 1.5px solid #0D8B7B; color: #0D665A; font-size: 12px; letter-spacing: .11em; text-transform: uppercase; }
+.cv-sheet h3 { margin: 11px 0 2px; color: #17211F; font-size: 13px; }
+.cv-sheet p { margin: 5px 0; color: #293936; font-size: 12px; }
+.cv-sheet ul { margin: 5px 0 8px; padding-left: 18px; }
+.cv-sheet li { margin: 4px 0; color: #293936; font-size: 12px; }
+.cv-sheet .cv-skills { line-height: 1.7; }
+.cv-missing { margin-top: var(--s3); padding: 10px 12px; border-left: 3px solid var(--warn); background: var(--warn-soft); color: var(--ink-2); font-size: 12px; }
+:root[data-theme="dark"] .tailor-pack { background: var(--surface-2); border-color: var(--rule); }
 .expand {
   grid-column: 2 / -1; padding: 0 14px 16px 0; display: none;
   border-top: 1px dashed var(--rule-soft); margin-top: 2px; padding-top: 13px;
@@ -632,7 +657,10 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
     padding: 0 var(--s4) var(--s4) 0; flex-wrap: wrap; text-align: left;
   }
   .side .applybtn, .side .linkbtn { padding-inline: var(--s4); }
+  .side > * { width: auto; flex: 1 1 125px; text-align: center; }
   .expand { grid-column: 2 / -1; }
+  .cv-sheet { padding: 26px 20px; min-height: 0; }
+  .cv-sheet h1 { font-size: 25px; }
   .brand h1 { font-size: 22px; }
   .freshness { text-align: left; }
   .srcstat.total { margin-left: 0; padding-left: 0; border-left: 0; }
@@ -719,6 +747,7 @@ footer { margin-top: 26px; font-size: 12.5px; color: var(--muted); line-height: 
   --maxw: 1240px;
   --radius: 16px;
 }
+.side > * { width: 100%; }
 body { background: linear-gradient(180deg, #F8FAFD 0, var(--paper) 520px); }
 .masthead {
   color: #fff; border: 0; overflow: hidden; position: relative;
@@ -824,9 +853,13 @@ select { border-radius: 9px; min-height: 38px; }
 @media (max-width: 720px) {
   .masthead-in { padding-block: 16px 48px; }
   .brand .tag, .freshness { display: none; }
-  .hero-grid { padding-top: 38px; }
-  .hero-copy h2 { font-size: 40px; }
+  .hero-grid { padding-top: 30px; gap: 24px; }
+  .hero-copy h2 { font-size: clamp(34px, 10.5vw, 40px); }
   .hero-copy p { font-size: 15px; }
+  .hero-actions { margin-top: 22px; }
+  .audience-panel { border-radius: 16px; }
+  .audience-option { padding: 14px 12px; grid-template-columns: 38px minmax(0,1fr) auto; }
+  .audience-icon { width: 38px; height: 38px; }
   .ribbon { width: calc(100% - 24px); margin-top: -19px; }
   .ribbon-in { gap: 10px 18px; padding: 13px 15px; }
   .srcstat.total { width: 100%; padding-top: 8px; border-top: 1px solid var(--rule); }
@@ -835,7 +868,7 @@ select { border-radius: 9px; min-height: 38px; }
   .resume-actions { width: 100%; }
   .resume-actions .btn { flex: 1; }
   .controls { padding: 12px; }
-  .controls select { flex: 1 1 calc(50% - 8px); min-width: 0; }
+  .controls select { flex: 1 1 calc(50% - 8px); min-width: 0; max-width: none; }
   .contact-card { grid-template-columns: 32px minmax(0,1fr); }
   .contact-action { grid-column: 2; }
 }
@@ -923,7 +956,7 @@ select { border-radius: 9px; min-height: 38px; }
     </div>
     <div class="step">
       <span class="step-n">3</span>
-      <div><b>Apply where you actually fit</b><span>Employer-direct roles are flagged, so you can skip agency reposts.</span></div>
+      <div><b>Build the CV for that role</b><span>Edit a complete ATS-oriented version, then download it in Word or save it as PDF.</span></div>
     </div>
   </div>
 </div>
@@ -933,8 +966,8 @@ select { border-radius: 9px; min-height: 38px; }
   <section class="resume" id="resume-match">
     <div class="resume-head">
       <div>
-        <h2>Compare your resume with finance roles</h2>
-        <p>Check your resume's text structure and compare its evidence with job postings. Review explicit requirements, preferred skills and conditions to confirm before applying. Your resume stays in this browser.</p>
+        <h2>Check once. Tailor for every application.</h2>
+        <p>Upload your complete CV to score its structure, compare it with each posting, and generate a professionally formatted role-specific Word or PDF version. Your resume stays in this browser.</p>
       </div>
       <div class="resume-actions">
         <button class="btn btn-primary" id="open-dz">Add my resume</button>
@@ -973,6 +1006,11 @@ select { border-radius: 9px; min-height: 38px; }
     <select id="career-family"></select>
     <div id="career-content" aria-live="polite"></div>
     <p class="screen-note">These are learning suggestions, not mandatory qualifications. Each employer sets its own requirements. Counts describe this collected dataset; some career paths may have no current listings.</p>
+    <div class="post-watch">
+      <b>LinkedIn hiring-post watch</b>
+      <p>Recruiters sometimes announce vacancies as feed posts instead of formal Jobs listings. These searches open LinkedIn's latest content for the priority roles and cities; sign-in may be required.</p>
+      <div class="post-links" id="post-links"></div>
+    </div>
   </details>
 
   <div class="controls" id="browse-jobs">
@@ -1144,6 +1182,194 @@ select { border-radius: 9px; min-height: 38px; }
   function skillsIn(text) { return financeMatcher.skillsIn(text, true); }
 
   function titleCase(s) { return s.replace(/\b[a-z]/g, function (c) { return c.toUpperCase(); }); }
+
+  function htmlSafe(value) {
+    return String(value || "").replace(/&/g, "&amp;").replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
+  var CV_SECTION_NAMES = {
+    summary: "Professional Summary", experience: "Professional Experience",
+    education: "Education", skills: "Core Skills", certifications: "Certifications",
+    projects: "Projects", achievements: "Achievements", languages: "Languages",
+    other: "Additional Information"
+  };
+  var CV_SECTION_TESTS = [
+    ["summary", /^(professional\s+)?(summary|profile|objective|career objective)$/i],
+    ["experience", /^(professional|work|employment|career)?\s*(experience|history)$/i],
+    ["education", /^(education|academic(s| qualifications?)?|qualifications?)$/i],
+    ["skills", /^(core |key |technical )?(skills|competencies|expertise)$/i],
+    ["certifications", /^(certifications?|licenses?|professional qualifications?)$/i],
+    ["projects", /^(projects?|key projects?)$/i],
+    ["achievements", /^(achievements?|awards?|accomplishments?)$/i],
+    ["languages", /^languages?$/i]
+  ];
+
+  function cvSectionKey(line) {
+    var clean = line.replace(/[:|]+$/, "").trim();
+    for (var i = 0; i < CV_SECTION_TESTS.length; i++) {
+      if (CV_SECTION_TESTS[i][1].test(clean)) return CV_SECTION_TESTS[i][0];
+    }
+    return "";
+  }
+
+  function polishCvLine(line) {
+    var hadBullet = /^[\s]*[•▪●◦‣⁃*·\-–]/.test(line);
+    var text = line.replace(/^[\s]*[•▪●◦‣⁃*·\-–]+\s*/, "").trim();
+    text = text.replace(/^(i\s+am\s+|i\s+was\s+|i\s+have\s+|i\s+)/i, "")
+      .replace(/^(was\s+)?responsible\s+for\s+/i, "Handled ")
+      .replace(/^worked\s+on\s+/i, "Supported ")
+      .replace(/^involved\s+in\s+/i, "Contributed to ");
+    if (text) text = text.charAt(0).toUpperCase() + text.slice(1);
+    if (hadBullet && text && !/[.!?]$/.test(text)) text += ".";
+    return { text: text, bullet: hadBullet };
+  }
+
+  function parseCv(text) {
+    var sections = { summary: [], experience: [], education: [], skills: [], certifications: [], projects: [], achievements: [], languages: [], other: [] };
+    var header = [], current = "", foundSection = false;
+    (text || "").split(/\r?\n/).forEach(function (raw) {
+      var line = raw.replace(/\s+/g, " ").trim();
+      if (!line) return;
+      var key = cvSectionKey(line);
+      if (key) { current = key; foundSection = true; return; }
+      if (!foundSection && header.length < 8) header.push(line);
+      else sections[current || "other"].push(line);
+    });
+    // A one-paragraph pasted CV has no usable line boundaries. Keep it in
+    // the experience section rather than dropping any of the candidate's text.
+    if (!foundSection && sections.other.length === 0 && header.length) {
+      sections.other = header.slice(1);
+    }
+    var name = header.filter(function (line) {
+      return !/@|linkedin|https?:|\+?\d[\d\s()-]{7,}|\b(india|bengaluru|bangalore|hyderabad|chennai|mumbai|pune)\b/i.test(line);
+    })[0] || "Candidate Name";
+    var contacts = header.filter(function (line) { return line !== name; });
+    return { name: name, contacts: contacts, sections: sections };
+  }
+
+  function looksLikeCvMeta(line) {
+    return /\b(19|20)\d{2}\b|\bpresent\b|\b(current|company|limited|ltd|pvt|llp|university|college)\b/i.test(line)
+      || (line.length < 75 && !/[.!?]$/.test(line) && line.split(/\s+/).length <= 10);
+  }
+
+  function cvListHtml(lines, kind) {
+    if (!lines.length) return "";
+    var out = [], bullets = [];
+    function flush() {
+      if (!bullets.length) return;
+      out.push("<ul>" + bullets.map(function (b) { return "<li>" + htmlSafe(b) + "</li>"; }).join("") + "</ul>");
+      bullets = [];
+    }
+    lines.forEach(function (raw) {
+      var polished = polishCvLine(raw);
+      if (!polished.text) return;
+      if (kind === "experience" && (looksLikeCvMeta(polished.text) && !polished.bullet)) {
+        flush(); out.push("<h3>" + htmlSafe(polished.text) + "</h3>");
+      } else if (polished.bullet || kind === "experience" || kind === "projects" || kind === "achievements") {
+        bullets.push(polished.text);
+      } else {
+        flush(); out.push("<p>" + htmlSafe(polished.text) + "</p>");
+      }
+    });
+    flush();
+    return out.join("");
+  }
+
+  function roleMatchForText(job, text) {
+    var asked = skillsIn([job.title, job.skills, job.jd].filter(Boolean).join(" . "));
+    var present = skillsIn(text), hit = 0, total = 0;
+    asked.forEach(function (skill) {
+      var weight = norm(job.title).indexOf(skill) >= 0 ? 3 : 1;
+      total += weight;
+      if (present.indexOf(skill) >= 0) hit += weight;
+    });
+    return total ? Math.round(hit / total * 100) : 0;
+  }
+
+  function buildTargetedCv(job) {
+    var parsed = parseCv(resume.text);
+    var match = matchJob(job) || { have: [], missing: [] };
+    var documented = match.have.concat(resume.skills).filter(function (skill, i, all) { return all.indexOf(skill) === i; });
+    var summary = documented.length
+      ? "Finance professional with documented experience in " + documented.slice(0, 8).map(titleCase).join(", ") + ". Brings evidence aligned to the " + job.title + " opportunity, with a focus on accurate execution, controls and stakeholder outcomes."
+      : "Finance professional targeting the " + job.title + " opportunity. Review this summary and add only outcomes supported by your experience.";
+    var html = "<h1>" + htmlSafe(parsed.name) + "</h1>"
+      + "<p class=\"cv-contact\">" + htmlSafe(parsed.contacts.join("  |  ")) + "</p>"
+      + "<h2>Professional Summary</h2><p>" + htmlSafe(summary) + "</p>"
+      + "<h2>Core Skills</h2><p class=\"cv-skills\">" + htmlSafe(documented.slice(0, 24).map(titleCase).join("  •  ") || "Add only skills supported by your CV") + "</p>";
+    ["experience", "projects", "education", "certifications", "achievements", "languages", "other"].forEach(function (key) {
+      var lines = parsed.sections[key];
+      if (!lines.length) return;
+      html += "<h2>" + CV_SECTION_NAMES[key] + "</h2>" + cvListHtml(lines, key);
+    });
+    // Preserve free-form skills our vocabulary does not recognise, without
+    // repeating the same list immediately below Core Skills.
+    var skillExtras = parsed.sections.skills.join(",").split(/[,;|]/).map(function (s) { return s.trim(); }).filter(function (term, i, all) {
+      if (!term || all.indexOf(term) !== i) return false;
+      var recognised = skillsIn(term);
+      return !recognised.some(function (skill) { return documented.indexOf(skill) >= 0; });
+    });
+    if (skillExtras.length) html += "<h2>Additional Skills</h2>" + cvListHtml(skillExtras, "skills");
+    var holder = document.createElement("div"); holder.innerHTML = html;
+    var plain = holder.innerText || holder.textContent || "";
+    return { html: html, plain: plain, missing: match.missing,
+             ats: atsReport({ text: plain, skills: skillsIn(plain) }).score,
+             role: roleMatchForText(job, plain) };
+  }
+
+  function cvFileHtml(inner, title) {
+    return "<!doctype html><html><head><meta charset=\"utf-8\"><title>" + htmlSafe(title) + "</title>"
+      + "<style>@page{size:A4;margin:15mm}body{font-family:Arial,sans-serif;color:#17211f;line-height:1.42;max-width:180mm;margin:auto}h1{text-align:center;font-size:25pt;margin:0;color:#102a26}.cv-contact{text-align:center;color:#4c5f5a;font-size:9pt;margin:5pt 0 16pt}h2{font-size:10pt;letter-spacing:1pt;text-transform:uppercase;color:#0d665a;border-bottom:1.2pt solid #0d8b7b;padding-bottom:3pt;margin:14pt 0 5pt}h3{font-size:10pt;margin:8pt 0 2pt}p,li{font-size:9.5pt;margin:3pt 0}ul{margin:3pt 0 6pt;padding-left:15pt}.cv-skills{line-height:1.65}@media print{body{max-width:none}}</style></head><body>"
+      + inner + "</body></html>";
+  }
+
+  function tailorPanel(job) {
+    var draft = buildTargetedCv(job);
+    var box = el("div", "block tailor-pack");
+    var head = el("div", "tailor-head");
+    var intro = el("div");
+    intro.appendChild(el("h4", null, "Complete ATS-oriented CV for " + job.title));
+    intro.appendChild(el("p", "tailor-note", "Edit the formatted document below. It keeps the source CV's history, standardises its structure and rephrases obvious duty-led lines without inventing qualifications or results."));
+    head.appendChild(intro);
+    var scores = el("div", "tailor-score");
+    var atsScore = el("span"), atsNumber = el("b", null, draft.ats); atsScore.appendChild(atsNumber); atsScore.appendChild(document.createTextNode("ATS readiness / 100"));
+    var roleScore = el("span"), roleNumber = el("b", null, draft.role + "%"); roleScore.appendChild(roleNumber); roleScore.appendChild(document.createTextNode("role keyword coverage"));
+    var targetScore = el("span"); targetScore.appendChild(el("b", null, "90+")); targetScore.appendChild(document.createTextNode("readiness target"));
+    scores.appendChild(atsScore); scores.appendChild(roleScore); scores.appendChild(targetScore); head.appendChild(scores); box.appendChild(head);
+    var actions = el("div", "tailor-actions");
+    var word = el("button", "btn btn-primary", "Download Word CV");
+    var pdf = el("button", "btn", "Save as PDF");
+    var reset = el("button", "btn", "Reset draft");
+    actions.appendChild(word); actions.appendChild(pdf); actions.appendChild(reset); box.appendChild(actions);
+    var sheet = el("div", "cv-sheet"); sheet.contentEditable = "true"; sheet.spellcheck = true;
+    sheet.setAttribute("aria-label", "Editable tailored CV for " + job.title); sheet.innerHTML = draft.html; box.appendChild(sheet);
+    if (draft.missing.length) box.appendChild(el("div", "cv-missing", "Not added because the source CV does not evidence them: " + draft.missing.slice(0, 14).map(titleCase).join(", ") + ". Add only those you can support with a real example."));
+    function filename(ext) { return (job.title || "tailored-cv").replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "") + "-CV." + ext; }
+    word.addEventListener("click", function () {
+      var blob = new Blob([cvFileHtml(sheet.innerHTML, job.title + " CV")], { type: "application/msword;charset=utf-8" });
+      var link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = filename("doc"); link.click();
+      setTimeout(function () { URL.revokeObjectURL(link.href); }, 1000);
+      track("used/downloaded-word-cv", "Downloaded tailored Word CV");
+    });
+    pdf.addEventListener("click", function () {
+      var win = window.open("", "_blank");
+      if (!win) { alert("Allow pop-ups, then choose Save as PDF again."); return; }
+      win.opener = null;
+      win.document.open(); win.document.write(cvFileHtml(sheet.innerHTML, job.title + " CV")); win.document.close();
+      setTimeout(function () { win.focus(); win.print(); }, 250);
+      track("used/printed-cv", "Opened tailored CV for PDF export");
+    });
+    var scoreTimer;
+    function refreshDraftScores() {
+      var text = sheet.innerText || sheet.textContent || "";
+      atsNumber.textContent = atsReport({ text: text, skills: skillsIn(text) }).score;
+      roleNumber.textContent = roleMatchForText(job, text) + "%";
+    }
+    sheet.addEventListener("input", function () { clearTimeout(scoreTimer); scoreTimer = setTimeout(refreshDraftScores, 300); });
+    reset.addEventListener("click", function () { var fresh = buildTargetedCv(job); sheet.innerHTML = fresh.html; refreshDraftScores(); });
+    return box;
+  }
 
   // ---------- resume state ----------
   var resume = null; // {name, text, tokens, skills}
@@ -2084,6 +2310,23 @@ select { border-radius: 9px; min-height: 38px; }
         ? "Use the recruiter contact published in the original job posting"
         : "Open LinkedIn people search for " + j.company + " — your own connections there show first";
       side.appendChild(pl);
+      var tailor = el("button", "linkbtn tailorbtn", "Build ATS CV");
+      tailor.type = "button";
+      tailor.addEventListener("click", function () {
+        if (!resume) {
+          document.getElementById("resume-match").scrollIntoView({ behavior: "smooth", block: "start" });
+          document.getElementById("open-dz").click();
+          return;
+        }
+        var existing = ex.querySelector(".tailor-pack");
+        if (!existing) { ex.insertBefore(tailorPanel(j), ex.firstChild); existing = ex.firstChild; }
+        row.classList.add("open");
+        more.setAttribute("aria-expanded", "true");
+        more.textContent = "Hide details";
+        existing.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        track("used/tailored-cv", "Created a role-specific CV draft");
+      });
+      side.appendChild(tailor);
       row.appendChild(side);
 
       var ex = el("div", "expand");
@@ -2296,6 +2539,17 @@ select { border-radius: 9px; min-height: 38px; }
     }
     select.addEventListener("change", paint);
     paint();
+    var postLinks = document.getElementById("post-links");
+    ["Accounts Receivable", "FP&A"].forEach(function (role) {
+      ["Bengaluru", "Hyderabad", "Chennai"].forEach(function (city) {
+        var query = '"' + role + '" (hiring OR vacancy OR opening) "' + city + '"';
+        var link = el("a", "btn", role + " · " + city);
+        link.href = "https://www.linkedin.com/search/results/content/?keywords=" + encodeURIComponent(query) + "&sortBy=%22date_posted%22";
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        postLinks.appendChild(link);
+      });
+    });
   }
 
   // ---------- chrome ----------

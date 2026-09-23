@@ -106,6 +106,9 @@ MY_EXPERIENCE_YEARS = 5
 LOCATIONS = ["Bengaluru", "Chennai", "Hyderabad", "Mumbai", "Pune",
              "Delhi", "Gurgaon", "Noida", "Kolkata", "Coimbatore",
              "Ahmedabad", "Jaipur", "Kochi", "Chandigarh", "Indore"]
+# AR and FP&A are the board's priority tracks.  Put their highest-value
+# markets first so a partially completed portal run still covers them.
+PRIORITY_LOCATIONS = ["Bengaluru", "Hyderabad", "Chennai"]
 LOCATION_STRICT = True
 
 # --- How fresh (hard gate) --------------------------------------------
@@ -211,6 +214,28 @@ PRIMARY_QUERIES = [
     "finance manager",
 ]
 
+# Deliberately specific variants for the two priority tracks.  Portal search
+# ranking is not transitive: an "FP&A" result set does not reliably include
+# every "commercial finance" or "MIS analyst" posting, and AR has the same
+# problem with cash application / billing titles.  De-duplication happens by
+# source job ID after collection.
+PRIORITY_ROLE_QUERIES = [
+    "accounts receivable analyst",
+    "accounts receivable specialist",
+    "cash application",
+    "order to cash analyst",
+    "billing analyst",
+    "collections specialist",
+    "credit and collections",
+    "fp&a",
+    "financial planning and analysis",
+    "budgeting and forecasting",
+    "business finance analyst",
+    "commercial finance analyst",
+    "finance business partner",
+    "mis analyst finance",
+]
+
 # Extra Naukri-only stems. LinkedIn's guest API throttles hard, so the
 # broader and noisier queries are not worth spending its budget on.
 HIDDEN_QUERIES = [
@@ -232,6 +257,12 @@ LINKEDIN_QUERIES = [
     "financial analyst", "accountant", "internal audit", "finance manager",
 ]
 LINKEDIN_CITIES = ["India"]
+LINKEDIN_PRIORITY_PAGES = 12
+LINKEDIN_PRIORITY_QUERIES = [
+    "accounts receivable", "order to cash", "cash application",
+    "credit collections", "fp&a", "financial planning analysis",
+    "business finance", "finance business partner",
+]
 
 # LinkedIn gives Easy Apply searches their own result ranking. Sampling that
 # ranking does more than label the same rows: it also exposes relevant jobs
@@ -303,6 +334,7 @@ from finance_catalog import JOB_FAMILIES, SKILL_VOCAB, ADDITIONAL_QUERIES, SPECI
 
 FAMILY_NAMES = [name for name, _, _ in JOB_FAMILIES]
 PRIMARY_QUERIES = list(dict.fromkeys(PRIMARY_QUERIES + ADDITIONAL_QUERIES))
+PRIMARY_QUERIES = list(dict.fromkeys(PRIORITY_ROLE_QUERIES + PRIMARY_QUERIES))
 LINKEDIN_QUERIES = list(dict.fromkeys(LINKEDIN_QUERIES + [row[3] for row in SPECIALISMS]))
 
 CONSULTANCY_WORDS = [
@@ -1309,6 +1341,14 @@ def linkedin_search_urls(queries):
     # Cover every career area before spending the time budget on deeper
     # pages of the first few AR searches.
     urls = []
+    # Targeted AR/FP&A city searches run first.  This is intentionally a
+    # separate ranking from the India-wide search: LinkedIn can bury a local
+    # requisition well beyond the country result window.
+    for pg in range(LINKEDIN_PRIORITY_PAGES):
+        for loc in PRIORITY_LOCATIONS:
+            for q in LINKEDIN_PRIORITY_QUERIES:
+                urls.append(linkedin_search_url(
+                    q, loc, pg * LINKEDIN_PAGE_SIZE))
     for pg in range(LINKEDIN_PAGES):
         for loc in LINKEDIN_CITIES:
             for q in queries:

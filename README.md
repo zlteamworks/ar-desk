@@ -30,6 +30,15 @@ website backend in [`cloudflare/`](cloudflare/); GitHub Pages cannot enforce log
 - **See the skill gap on the card.** Once a resume is loaded, each row
   shows what the posting asks for that the resume never mentions — without
   opening anything. Deciding whether to apply shouldn't cost a click.
+- **Create a complete role-specific CV.** Every listing has a `Build ATS CV`
+  action after a resume is loaded. It preserves the source CV's full history,
+  standardises ATS-friendly section structure, rephrases obvious duty-led
+  lines, reports readiness and role-keyword coverage, and exports a formatted
+  Word document or print-ready PDF. It never inserts unsupported skills or
+  fabricated metrics; candidates must verify the edited document.
+- **Watch LinkedIn hiring posts.** The career guide links to recent LinkedIn
+  content searches for AR and FP&A in Bengaluru, Hyderabad and Chennai, which
+  catches recruiter feed posts that are not exposed by the LinkedIn Jobs API.
 - **See who you'd actually reach.** Each row is labelled `direct`,
   `agency` or `unverified`. Only postings from an employer's own applicant
   tracking system, or a recognised staffing firm, get a definite label;
@@ -67,6 +76,9 @@ within seven days and searches 15 Indian hiring hubs. Broader career queries
 take effect on the next collection; rebuilding reclassifies existing public
 rows but does not fetch new jobs. Coverage depends on source availability,
 search budgets and employer feeds; it is not an exhaustive census of jobs.
+AR and FP&A receive additional title variants and city-priority LinkedIn
+searches for Bengaluru, Hyderabad and Chennai. No source can guarantee that
+every vacancy is visible, particularly private or connection-only feed posts.
 
 The career guide's examples are not eligibility rules. Screening uses only
 available posting text, treats equivalent skill names together and keeps

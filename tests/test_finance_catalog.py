@@ -15,7 +15,20 @@ class FinanceCoverageTests(unittest.TestCase):
     def test_linkedin_covers_families_before_deeper_pages(self):
         queries = ["accounts receivable", "actuarial", "investment banking"]
         urls = bot.linkedin_search_urls(queries)
-        self.assertEqual(urls[:3], [bot.linkedin_search_url(q, bot.LINKEDIN_CITIES[0], 0) for q in queries])
+        expected = [bot.linkedin_search_url(q, bot.PRIORITY_LOCATIONS[0], 0)
+                    for q in bot.LINKEDIN_PRIORITY_QUERIES]
+        self.assertEqual(urls[:len(expected)], expected)
+        country_first = [bot.linkedin_search_url(q, bot.LINKEDIN_CITIES[0], 0)
+                         for q in queries]
+        start = (bot.LINKEDIN_PRIORITY_PAGES * len(bot.PRIORITY_LOCATIONS) *
+                 len(bot.LINKEDIN_PRIORITY_QUERIES))
+        self.assertEqual(urls[start:start + len(queries)], country_first)
+
+    def test_priority_ar_fpa_search_configuration(self):
+        self.assertEqual(bot.PRIORITY_LOCATIONS, ["Bengaluru", "Hyderabad", "Chennai"])
+        for query in ("cash application", "collections specialist", "fp&a",
+                      "budgeting and forecasting", "finance business partner"):
+            self.assertIn(query, bot.PRIMARY_QUERIES)
 
     def test_countrywide_linkedin_and_workday_coverage_config(self):
         import workday_source
@@ -150,6 +163,10 @@ class FinanceCoverageTests(unittest.TestCase):
         self.assertEqual(payload["jobs"][0]["score"], 9)
         self.assertNotIn("/*__FINANCE_MATCH__*/", html)
         self.assertEqual(len(data["finance_catalog"]["families"]), 26)
+        self.assertIn("Download Word CV", html)
+        self.assertIn("Save as PDF", html)
+        self.assertIn("contentEditable", html)
+        self.assertNotIn("Download .txt", html)
 
     def test_javascript_screening(self):
         import shutil
