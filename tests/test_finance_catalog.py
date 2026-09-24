@@ -167,6 +167,8 @@ class FinanceCoverageTests(unittest.TestCase):
         self.assertIn("Save as PDF", html)
         self.assertIn("contentEditable", html)
         self.assertNotIn("Download .txt", html)
+        self.assertNotIn('<script src="https://cdnjs.cloudflare.com', html)
+        self.assertIn('function loadReader(kind)', html)
 
     def test_javascript_screening(self):
         import shutil

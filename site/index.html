@@ -1108,9 +1108,6 @@ select { border-radius: 9px; min-height: 38px; }
   </footer>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.12.3/mammoth.browser.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
 <script>/* Local text evidence, not an employer's ATS or a hiring decision. */
 (function (root) {
   "use strict";
@@ -2024,6 +2021,36 @@ select { border-radius: 9px; min-height: 38px; }
   }
 
   // ---------- file reading ----------
+  // Resume readers are intentionally lazy. Synchronous CDN scripts used to
+  // block the entire job board: on a slow or filtered connection the page
+  // showed an empty ribbon and "Last refreshed —" even though deployment
+  // and job collection had succeeded. The board now starts without any
+  // third-party request; a reader is downloaded only after a file is chosen.
+  var readerLoads = {};
+  function loadReader(kind) {
+    var existing = kind === "word" ? window.mammoth : window.pdfjsLib;
+    if (existing) return Promise.resolve(existing);
+    if (readerLoads[kind]) return readerLoads[kind];
+    var url = kind === "word"
+      ? "https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.12.3/mammoth.browser.min.js"
+      : "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+    readerLoads[kind] = new Promise(function (resolve, reject) {
+      var script = document.createElement("script");
+      script.src = url; script.async = true;
+      script.onload = function () {
+        var lib = kind === "word" ? window.mammoth : window.pdfjsLib;
+        if (!lib) { reject(new Error("reader unavailable")); return; }
+        if (kind === "pdf" && lib.GlobalWorkerOptions) {
+          lib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+        }
+        resolve(lib);
+      };
+      script.onerror = function () { reject(new Error("reader download failed")); };
+      document.head.appendChild(script);
+    });
+    return readerLoads[kind];
+  }
+
   function readFile(file) {
     var name = file.name || "your resume";
     var low = name.toLowerCase();
@@ -2036,19 +2063,20 @@ select { border-radius: 9px; min-height: 38px; }
     }
     if (low.endsWith(".docx") || low.endsWith(".doc")) {
       fr.onload = function () {
-        if (!window.mammoth) { fail("Word reader did not load — paste the text instead."); return; }
-        window.mammoth.extractRawText({ arrayBuffer: fr.result })
+        loadReader("word").then(function (lib) {
+          return lib.extractRawText({ arrayBuffer: fr.result });
+        })
           .then(function (r) { ok(setResume(name, r.value), name); })
-          .catch(function () { fail("Could not read that Word file — paste the text instead."); });
+          .catch(function () { fail("Could not load or read that Word file — paste the text instead."); });
       };
       fr.readAsArrayBuffer(file);
       return;
     }
     if (low.endsWith(".pdf")) {
       fr.onload = function () {
-        var lib = window.pdfjsLib;
-        if (!lib) { fail("PDF reader did not load — paste the text instead."); return; }
-        lib.getDocument({ data: fr.result }).promise.then(function (pdf) {
+        loadReader("pdf").then(function (lib) {
+          return lib.getDocument({ data: fr.result }).promise;
+        }).then(function (pdf) {
           var pages = [];
           for (var i = 1; i <= pdf.numPages; i++) pages.push(i);
           return Promise.all(pages.map(function (n) {
@@ -2057,7 +2085,7 @@ select { border-radius: 9px; min-height: 38px; }
           }));
         }).then(function (parts) {
           ok(setResume(name, parts.join("\n")), name);
-        }).catch(function () { fail("Could not read that PDF — paste the text instead."); });
+        }).catch(function () { fail("Could not load or read that PDF — paste the text instead."); });
       };
       fr.readAsArrayBuffer(file);
       return;
