@@ -204,7 +204,14 @@ async function jobPage(request, env, user) {
   const asset = await env.ASSETS.fetch(new Request(assetUrl));
   let body = await asset.text();
   const bar = `<div style="position:sticky;top:0;z-index:100;background:#101d36;color:#fff;padding:9px 20px;display:flex;justify-content:space-between;align-items:center;font:13px Arial"><span>Signed in as <b>${escapeHtml(user.full_name)}</b> · Job seeker</span><span><a href="/profile" style="color:#8fe8d9;margin-right:16px">My candidate profile</a><form style="display:inline" method="post" action="/api/logout"><input type="hidden" name="csrf" value="${escapeHtml(user.csrf_token)}"><button style="color:#fff;background:transparent;border:1px solid #ffffff55;border-radius:6px;padding:5px 9px">Sign out</button></form></span></div>`;
-  body = body.replace("<body>", "<body>" + bar);
+  // The generated single-file page intentionally omits optional <head> and
+  // <body> tags. Searching for the literal "<body>" therefore matched the
+  // CV export template inside an inline JavaScript string and injected this
+  // toolbar into the script, stopping all job data from rendering. Anchor to
+  // the page's real first visible element instead.
+  const pageAnchor = `<header class="masthead">`;
+  if (!body.includes(pageAnchor)) throw new Error("Job page header is missing");
+  body = body.replace(pageAnchor, bar + pageAnchor);
   return new Response(body, { headers: securityHeaders() });
 }
 

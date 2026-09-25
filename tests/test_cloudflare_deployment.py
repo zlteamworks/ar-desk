@@ -37,6 +37,12 @@ class CloudflareDeploymentTests(unittest.TestCase):
         self.assertIn("path === \"/index.html\"", source)
         self.assertIn("HttpOnly; Secure; SameSite=Strict", source)
 
+    def test_job_bar_is_inserted_at_real_page_header(self):
+        source = WORKER.read_text(encoding="utf-8")
+        self.assertNotIn('body.replace("<body>"', source)
+        self.assertIn('const pageAnchor = `<header class="masthead">`', source)
+        self.assertIn("body.replace(pageAnchor, bar + pageAnchor)", source)
+
     def test_worker_has_valid_javascript_syntax(self):
         if not NODE.exists():
             self.skipTest("Node is not available in this environment")
