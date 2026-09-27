@@ -26,7 +26,9 @@ website backend in [`cloudflare/`](cloudflare/); GitHub Pages cannot enforce log
   and how recently the job was posted.
 - **Score your own resume** against any posting. Drop in a resume and the
   page matches it against the job text locally. Your resume is never
-  uploaded or transmitted — there is nowhere for it to go.
+  uploaded or transmitted — there is nowhere for it to go. Safe mode keeps
+  the extracted text only in page memory, so closing or refreshing the tab
+  clears it instead of retaining it in browser storage.
 - **See the skill gap on the card.** Once a resume is loaded, each row
   shows what the posting asks for that the resume never mentions — without
   opening anything. Deciding whether to apply shouldn't cost a click.

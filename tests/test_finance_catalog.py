@@ -29,6 +29,13 @@ class FinanceCoverageTests(unittest.TestCase):
         for query in ("cash application", "collections specialist", "fp&a",
                       "budgeting and forecasting", "finance business partner"):
             self.assertIn(query, bot.PRIMARY_QUERIES)
+        for query in ("cash allocation", "cash posting", "credit controller",
+                      "financial planning analyst", "commercial finance analyst",
+                      "management reporting analyst"):
+            self.assertIn(query, bot.PRIORITY_ROLE_QUERIES)
+        for query in ("receivables analyst", "cash allocation", "commercial finance",
+                      "management reporting finance", "mis finance analyst"):
+            self.assertIn(query, bot.LINKEDIN_PRIORITY_QUERIES)
 
     def test_countrywide_linkedin_and_workday_coverage_config(self):
         import workday_source
@@ -37,6 +44,9 @@ class FinanceCoverageTests(unittest.TestCase):
         self.assertIn(("Visa", "visa", "wd5", "Visa"), workday_source.TENANTS)
         self.assertEqual(len(workday_source.TENANTS), len(set(workday_source.TENANTS)))
         self.assertGreaterEqual(workday_source.DETAIL_LIMIT, 300)
+        for query in ("accounts receivable", "cash application", "fp&a",
+                      "financial planning analysis", "finance business partner"):
+            self.assertIn(query, workday_source.DEEP_QUERIES)
 
     def test_linkedin_easy_apply_is_collected_and_exported(self):
         url = bot.linkedin_search_url("financial analyst", "India", 0, easy_apply=True)
@@ -163,7 +173,11 @@ class FinanceCoverageTests(unittest.TestCase):
         self.assertEqual(payload["jobs"][0]["score"], 9)
         self.assertNotIn("/*__FINANCE_MATCH__*/", html)
         self.assertEqual(len(data["finance_catalog"]["families"]), 26)
-        self.assertIn("Download Word CV", html)
+        self.assertIn("Download Word CV (.rtf)", html)
+        self.assertIn("function cvRtf(root)", html)
+        self.assertIn('type: "application/rtf"', html)
+        self.assertNotIn('localStorage.setItem("ardesk.resume"', html)
+        self.assertIn('localStorage.removeItem("ardesk.resume")', html)
         self.assertIn("Save as PDF", html)
         self.assertIn("contentEditable", html)
         self.assertNotIn("Download .txt", html)

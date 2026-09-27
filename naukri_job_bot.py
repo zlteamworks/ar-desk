@@ -222,18 +222,34 @@ PRIMARY_QUERIES = [
 PRIORITY_ROLE_QUERIES = [
     "accounts receivable analyst",
     "accounts receivable specialist",
+    "accounts receivable executive",
+    "receivables analyst",
     "cash application",
+    "cash application analyst",
+    "cash allocation",
+    "cash posting",
     "order to cash analyst",
+    "invoice to cash",
     "billing analyst",
+    "billing specialist",
     "collections specialist",
+    "collections analyst",
     "credit and collections",
+    "credit controller",
+    "dispute analyst",
+    "deductions analyst",
     "fp&a",
+    "fp&a analyst",
+    "senior fp&a analyst",
     "financial planning and analysis",
+    "financial planning analyst",
     "budgeting and forecasting",
+    "forecasting analyst",
     "business finance analyst",
     "commercial finance analyst",
     "finance business partner",
-    "mis analyst finance",
+    "management reporting analyst",
+    "mis finance analyst",
 ]
 
 # Extra Naukri-only stems. LinkedIn's guest API throttles hard, so the
@@ -259,17 +275,22 @@ LINKEDIN_QUERIES = [
 LINKEDIN_CITIES = ["India"]
 LINKEDIN_PRIORITY_PAGES = 12
 LINKEDIN_PRIORITY_QUERIES = [
-    "accounts receivable", "order to cash", "cash application",
-    "credit collections", "fp&a", "financial planning analysis",
-    "business finance", "finance business partner",
+    "accounts receivable", "receivables analyst", "order to cash",
+    "cash application", "cash allocation", "billing analyst",
+    "collections specialist", "credit collections", "credit controller",
+    "fp&a", "financial planning analysis", "budgeting forecasting",
+    "commercial finance", "business finance", "finance business partner",
+    "management reporting finance", "mis finance analyst",
 ]
 
 # LinkedIn gives Easy Apply searches their own result ranking. Sampling that
 # ranking does more than label the same rows: it also exposes relevant jobs
 # buried beyond the normal search's page cap.
 LINKEDIN_EASY_APPLY_QUERIES = [
-    "accounts receivable", "accounts payable", "financial analyst",
-    "accountant", "fp&a", "audit", "tax", "finance manager",
+    "accounts receivable", "order to cash", "cash application",
+    "collections", "accounts payable", "financial analyst",
+    "accountant", "fp&a", "financial planning analysis",
+    "business finance", "audit", "tax", "finance manager",
     "banking analyst", "investment analyst", "risk analyst",
 ]
 

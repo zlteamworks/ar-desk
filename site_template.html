@@ -1192,14 +1192,15 @@ select { border-radius: 9px; min-height: 38px; }
     other: "Additional Information"
   };
   var CV_SECTION_TESTS = [
-    ["summary", /^(professional\s+)?(summary|profile|objective|career objective)$/i],
-    ["experience", /^(professional|work|employment|career)?\s*(experience|history)$/i],
-    ["education", /^(education|academic(s| qualifications?)?|qualifications?)$/i],
-    ["skills", /^(core |key |technical )?(skills|competencies|expertise)$/i],
+    ["summary", /^(professional\s+)?(summary|profile|synopsis|objective|career objective|executive summary)$/i],
+    ["experience", /^(professional|work|employment|career|relevant)?\s*(experience|history|details)$/i],
+    ["education", /^(education|academic(s| background| qualifications?)?|educational qualifications?|qualifications?)$/i],
+    ["skills", /^(core |key |technical |professional )?(skills|competencies|expertise|proficiencies)$/i],
     ["certifications", /^(certifications?|licenses?|professional qualifications?)$/i],
     ["projects", /^(projects?|key projects?)$/i],
     ["achievements", /^(achievements?|awards?|accomplishments?)$/i],
-    ["languages", /^languages?$/i]
+    ["languages", /^languages?( known)?$/i],
+    ["other", /^(additional information|personal details|personal information)$/i]
   ];
 
   function cvSectionKey(line) {
@@ -1246,8 +1247,12 @@ select { border-radius: 9px; min-height: 38px; }
   }
 
   function looksLikeCvMeta(line) {
+    // A short line is not automatically a heading: that turned concise
+    // achievements such as "Reduced DSO by 12 days" into job titles. Keep
+    // only lines with real employer/date/title evidence as metadata.
     return /\b(19|20)\d{2}\b|\bpresent\b|\b(current|company|limited|ltd|pvt|llp|university|college)\b/i.test(line)
-      || (line.length < 75 && !/[.!?]$/.test(line) && line.split(/\s+/).length <= 10);
+      || /\b(analyst|associate|specialist|executive|accountant|controller|manager|lead|supervisor|consultant|officer|director|partner|intern)\b/i.test(line)
+      || /\s(?:\||@|—|–)\s/.test(line);
   }
 
   function cvListHtml(lines, kind) {
@@ -1288,9 +1293,11 @@ select { border-radius: 9px; min-height: 38px; }
     var parsed = parseCv(resume.text);
     var match = matchJob(job) || { have: [], missing: [] };
     var documented = match.have.concat(resume.skills).filter(function (skill, i, all) { return all.indexOf(skill) === i; });
-    var summary = documented.length
+    var targetedSummary = documented.length
       ? "Finance professional with documented experience in " + documented.slice(0, 8).map(titleCase).join(", ") + ". Brings evidence aligned to the " + job.title + " opportunity, with a focus on accurate execution, controls and stakeholder outcomes."
       : "Finance professional targeting the " + job.title + " opportunity. Review this summary and add only outcomes supported by your experience.";
+    var sourceSummary = parsed.sections.summary.map(function (line) { return polishCvLine(line).text; }).filter(Boolean).join(" ");
+    var summary = sourceSummary || targetedSummary;
     var html = "<h1>" + htmlSafe(parsed.name) + "</h1>"
       + "<p class=\"cv-contact\">" + htmlSafe(parsed.contacts.join("  |  ")) + "</p>"
       + "<h2>Professional Summary</h2><p>" + htmlSafe(summary) + "</p>"
@@ -1321,6 +1328,32 @@ select { border-radius: 9px; min-height: 38px; }
       + inner + "</body></html>";
   }
 
+  function rtfEscape(text) {
+    return String(text || "").replace(/\\/g, "\\\\").replace(/[{}]/g, "\\$&")
+      .replace(/\r?\n/g, "\\line ").replace(/[^\x00-\x7F]/g, function (ch) {
+        var n = ch.charCodeAt(0); if (n > 32767) n -= 65536;
+        return "\\u" + n + "?";
+      });
+  }
+
+  function cvRtf(root) {
+    var out = ["{\\rtf1\\ansi\\deff0{\\fonttbl{\\f0 Arial;}}{\\colortbl;\\red16\\green42\\blue38;\\red13\\green102\\blue90;\\red41\\green57\\blue54;}\\paperw11907\\paperh16840\\margl850\\margr850\\margt850\\margb850\\widowctrl\\hyphauto0\\fs19\\cf3 "];
+    Array.prototype.forEach.call(root.children, function (node) {
+      var tag = node.tagName.toLowerCase(), text = rtfEscape(node.innerText || node.textContent || "");
+      if (!text) return;
+      if (tag === "h1") out.push("\\pard\\qc\\keepn\\sb0\\sa100\\b\\fs34\\cf1 " + text + "\\b0\\fs19\\par ");
+      else if (tag === "h2") out.push("\\pard\\keepn\\sb180\\sa60\\brdrb\\brdrs\\brdrw12\\brdrcf2\\b\\fs20\\cf2 " + text.toUpperCase() + "\\b0\\fs19\\cf3\\par ");
+      else if (tag === "h3") out.push("\\pard\\keepn\\sb90\\sa20\\b\\fs20\\cf1 " + text + "\\b0\\fs19\\cf3\\par ");
+      else if (tag === "ul") Array.prototype.forEach.call(node.children, function (li) {
+        out.push("\\pard\\fi-260\\li440\\sa35\\tx440\\bullet\\tab " + rtfEscape(li.innerText || li.textContent || "") + "\\par ");
+      });
+      else if (node.classList.contains("cv-contact")) out.push("\\pard\\qc\\sa150\\fs18\\cf3 " + text + "\\par ");
+      else out.push("\\pard\\sa55\\fs19\\cf3 " + text + "\\par ");
+    });
+    out.push("}");
+    return out.join("");
+  }
+
   function tailorPanel(job) {
     var draft = buildTargetedCv(job);
     var box = el("div", "block tailor-pack");
@@ -1335,7 +1368,7 @@ select { border-radius: 9px; min-height: 38px; }
     var targetScore = el("span"); targetScore.appendChild(el("b", null, "90+")); targetScore.appendChild(document.createTextNode("readiness target"));
     scores.appendChild(atsScore); scores.appendChild(roleScore); scores.appendChild(targetScore); head.appendChild(scores); box.appendChild(head);
     var actions = el("div", "tailor-actions");
-    var word = el("button", "btn btn-primary", "Download Word CV");
+    var word = el("button", "btn btn-primary", "Download Word CV (.rtf)");
     var pdf = el("button", "btn", "Save as PDF");
     var reset = el("button", "btn", "Reset draft");
     actions.appendChild(word); actions.appendChild(pdf); actions.appendChild(reset); box.appendChild(actions);
@@ -1344,8 +1377,10 @@ select { border-radius: 9px; min-height: 38px; }
     if (draft.missing.length) box.appendChild(el("div", "cv-missing", "Not added because the source CV does not evidence them: " + draft.missing.slice(0, 14).map(titleCase).join(", ") + ". Add only those you can support with a real example."));
     function filename(ext) { return (job.title || "tailored-cv").replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "") + "-CV." + ext; }
     word.addEventListener("click", function () {
-      var blob = new Blob([cvFileHtml(sheet.innerHTML, job.title + " CV")], { type: "application/msword;charset=utf-8" });
-      var link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = filename("doc"); link.click();
+      // RTF is an actual Word document format. The previous HTML-with-.doc
+      // download produced extension mismatch warnings and inconsistent layout.
+      var blob = new Blob([cvRtf(sheet)], { type: "application/rtf" });
+      var link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = filename("rtf"); link.click();
       setTimeout(function () { URL.revokeObjectURL(link.href); }, 1000);
       track("used/downloaded-word-cv", "Downloaded tailored Word CV");
     });
@@ -1379,7 +1414,6 @@ select { border-radius: 9px; min-height: 38px; }
     // The resume itself is never sent anywhere - this records only that
     // somebody used the feature, with nothing about who or what.
     track("used/added-resume", "Scored a resume against the board");
-    try { localStorage.setItem("ardesk.resume", JSON.stringify({ name: resume.name, text: text.slice(0, 60000) })); } catch (e) {}
     paintResume();
     rerender();
     return true;
@@ -1388,7 +1422,6 @@ select { border-radius: 9px; min-height: 38px; }
   function clearResume() {
     resume = null;
     resumeVersion++;
-    try { localStorage.removeItem("ardesk.resume"); } catch (e) {}
     document.getElementById("loaded").classList.remove("on");
     document.getElementById("clear-resume").hidden = true;
     document.getElementById("paste").value = "";
@@ -2762,14 +2795,9 @@ select { border-radius: 9px; min-height: 38px; }
     rerender();
   });
 
-  try {
-    var saved = JSON.parse(localStorage.getItem("ardesk.resume") || "null");
-    if (saved && saved.text) {
-      resume = { name: saved.name, text: saved.text, tokens: tokens(saved.text), skills: skillsIn(saved.text) };
-      resumeVersion++;
-      paintResume();
-    }
-  } catch (e) {}
+  // Safe mode: remove data saved by older releases and keep future resume
+  // text in page memory only. Closing or refreshing the tab clears it.
+  try { localStorage.removeItem("ardesk.resume"); } catch (e) {}
 
   paintChrome();
   paintCareerGuide();

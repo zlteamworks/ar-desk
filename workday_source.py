@@ -136,9 +136,14 @@ WORKDAY_QUERIES = [
     "finance",
     "accounting",
     "accounts receivable",
+    "receivables analyst",
     "order to cash",
     "cash application",
+    "cash allocation",
+    "cash posting",
     "collections",
+    "credit collections",
+    "billing analyst",
     "accounts payable",
     "audit",
     "tax",
@@ -146,8 +151,13 @@ WORKDAY_QUERIES = [
     "payroll",
     "financial analyst",
     "fp&a",
+    "financial planning analysis",
     "budgeting forecasting",
     "business finance",
+    "commercial finance",
+    "finance business partner",
+    "management reporting",
+    "mis finance",
     "risk",
     "banking",
     "investment",
@@ -166,7 +176,17 @@ WORKDAY_QUERIES = [
 RESULTS_PER_PAGE = 20      # Workday's default page size
 MAX_PAGES = 2              # specialised searches rarely need more than 40
 DEEP_PAGES = 10            # country-filtered broad searches can exceed 100 rows
-DEEP_QUERIES = {"finance", "accounting"}
+# Priority AR/FP&A searches are deliberately deep too. A large employer can
+# have hundreds of matching India rows and Workday relevance ranking is not a
+# completeness guarantee; stopping at page two used to hide valid roles.
+DEEP_QUERIES = {
+    "finance", "accounting", "accounts receivable", "receivables analyst",
+    "order to cash", "cash application", "cash allocation", "cash posting",
+    "collections", "credit collections", "billing analyst", "financial analyst",
+    "fp&a", "financial planning analysis", "budgeting forecasting",
+    "business finance", "commercial finance", "finance business partner",
+    "management reporting", "mis finance",
+}
 CONCURRENCY = 12           # small independent JSON calls across many hosts
 TIMEOUT_S = 20
 DETAIL_CONCURRENCY = 6
